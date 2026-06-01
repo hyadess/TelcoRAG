@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="styles.css">
+    <title>Smart Home Dashboard</title>
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-brand">HomeSync</div>
+            <div class="menu-list">
+                <div class="menu-item">Overview</div>
+                <div class="menu-item">Room Layout</div>
+                <div class="menu-item active">Climate Control</div>
+                <div class="menu-item">Security</div>
+                <div class="menu-item">Settings</div>
+            </div>
+        </div>
+
+        <!-- Main View Area -->
+        <div class="main-view">
+            
+            <div class="page-header">
+                <div class="greeting">Climate Control</div>
+                <div class="system-status">System: Online</div>
+            </div>
+
+            <!-- Top Summary Stats -->
+            <div class="stats-container">
+                <div class="stat-card bg-blue">
+                    <div class="stat-title">Current Average</div>
+                    <div class="stat-value">72°F</div>
+                </div>
+                <div class="stat-card bg-orange">
+                    <div class="stat-title">Outside Temp</div>
+                    <div class="stat-value">85°F</div>
+                </div>
+                <div class="stat-card bg-green">
+                    <div class="stat-title">Energy Usage</div>
+                    <div class="stat-value">Moderate</div>
+                </div>
+            </div>
+
+            <!-- Bottom Control Grid -->
+            <div class="controls-layout">
+                
+                <!-- Left: Room Toggles Grid -->
+                <div class="room-zones">
+                    <div class="section-title">Zone Controls</div>
+                    <div class="zone-grid">
+                        
+                        <div class="zone-card">
+                            <div class="zone-name">Living Room</div>
+                            <div class="zone-temp">70°F</div>
+                            <button class="toggle-btn on">A/C On</button>
+                        </div>
+                        
+                        <div class="zone-card">
+                            <div class="zone-name">Kitchen</div>
+                            <div class="zone-temp">74°F</div>
+                            <button class="toggle-btn off">A/C Off</button>
+                        </div>
+
+                        <div class="zone-card">
+                            <div class="zone-name">Master Bedroom</div>
+                            <div class="zone-temp">68°F</div>
+                            <button class="toggle-btn on">A/C On</button>
+                        </div>
+
+                        <div class="zone-card">
+                            <div class="zone-name">Guest Room</div>
+                            <div class="zone-temp">75°F</div>
+                            <button class="toggle-btn off">A/C Off</button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Right: Master Slider Panel -->
+                <div class="master-control">
+                    <div class="section-title">Master Thermostat</div>
+                    <div class="thermostat-card">
+                        
+                        <div class="temp-display">72°</div>
+                        <div class="temp-label">Target Temperature</div>
+
+                        <div class="slider-box">
+                            <div class="slider-marks">
+                                <span>60°</span>
+                                <span>90°</span>
+                            </div>
+                            <input type="range" min="60" max="90" value="72" class="temp-slider">
+                        </div>
+
+                        <div class="fan-controls">
+                            <div class="fan-label">Fan Speed</div>
+                            <div class="btn-group">
+                                <button class="fan-btn">Low</button>
+                                <button class="fan-btn active-fan">Auto</button>
+                                <button class="fan-btn">High</button>
+                            </div>
+                        </div>
+
+                        <button class="apply-master-btn">Sync All Zones</button>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+</html>

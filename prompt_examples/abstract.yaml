@@ -1,0 +1,12 @@
+# Few-shot examples for abstraction-based reformulation.
+# The "abstract" field is a more general version of the original.
+
+examples:
+  - query: "Can a Nationwide ISP provide service in a single Upazila only?"
+    abstract: "What are the geographic scope rules for different ISP license categories?"
+
+  - query: "What is the late payment penalty if the ICX annual fee is paid 45 days after the due date?"
+    abstract: "How are late payment surcharges calculated for license fees?"
+
+  - query: "Are there partial payment options for short-term frequency usage (e.g., 3 months)?"
+    abstract: "How are radio frequency annual fees calculated and prorated?"

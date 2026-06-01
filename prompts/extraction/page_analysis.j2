@@ -1,0 +1,31 @@
+You are an expert document parser.
+
+### INSTRUCTIONS
+Identify structural elements in the text below. Classify them into these categories:
+
+1. **chapter_header**: Major sections WITHOUT numbers (e.g., "APPENDIX-1", "PREAMBLE"). Usually Bold/All-Caps, single-clause text.
+2. **section_header**: Topics WITH numbers (e.g., "1. INTRODUCTION", "2. DEFINITIONS"). Usually Bold/All-Caps, single-clause text.
+3. **new_subsection**: The **primary clause** of a section.
+   - **CRITICAL**: Only trigger a new subsection for the **root-level** identifier (e.g., "1.01", "2.3", "4.0").
+   - **DO NOT** create a new object for nested items like "1.01.01", "1.2.1", "(a)", "(i)". These belong to the parent subsection's content.
+   - A table or application form is also a subsection. Use the table or form number as the id, otherwise use "table" or "form".
+   - *Example:* If the text is "1.01 General. (a) Scope...", the entire text is one `new_subsection` with id "1.01".
+4. **continuation**: Text at the very top of the page that belongs to the subsection starting on the previous page.
+
+### GROUPING LOGIC
+- **Start** a `new_subsection` ONLY when you encounter a root identifier (e.g., "1.01").
+- **Continue** including text into that subsection (including nested points "1.01.01", "a.", "i." and table/form continuations).
+- **Stop** adding to a subsection when you encounter:
+    1. A `chapter_header`
+    2. A `section_header`
+    3. The next root identifier (e.g., "1.02")
+    4. A new table or form
+
+### OUTPUT FORMAT
+For each identified element, output a JSON object with:
+   - "type": one of ["chapter_header", "section_header", "new_subsection", "continuation"]
+   - "content": the full text (including all nested sub-paragraphs and lists)
+   - "id": (only for new_subsection) the root identifier (e.g., "1.01", "table", "form")
+
+### PAGE TEXT
+{{ page_text }}

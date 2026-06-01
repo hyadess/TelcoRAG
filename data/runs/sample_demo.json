@@ -1,0 +1,218 @@
+{
+  "run_id": "20260601_015702__sample_demo",
+  "label": "sample_demo",
+  "created_at": "2026-06-01T01:57:02",
+  "elapsed_seconds": 3.2,
+  "config": {
+    "embedder": "voyage",
+    "chunker": "baseline",
+    "query_strategy": "decompose",
+    "retriever": "hierarchical",
+    "reranker": "voyage",
+    "two_call_enabled": true,
+    "two_call_max_rounds": 1,
+    "post_processing": [
+      "dedupe",
+      "relevance_filter"
+    ],
+    "retrieval": {
+      "top_k": 30,
+      "rerank_top_k": 20
+    },
+    "hierarchical": {
+      "levels": [
+        {
+          "field": "doc_name",
+          "top_n": 3
+        },
+        {
+          "field": "chapter",
+          "top_n": 4
+        },
+        {
+          "field": "section",
+          "top_n": 5
+        }
+      ],
+      "expand_neighbors": true,
+      "neighbor_high": 0.65,
+      "neighbor_low": 0.3,
+      "neighbor_moderate": 0.4
+    }
+  },
+  "n_queries": 1,
+  "queries": [
+    {
+      "query": "What are the licensing fees and renewal conditions for ICX operators?",
+      "reformulated_queries": [
+        "ICX operator licensing fees",
+        "ICX operator renewal conditions"
+      ],
+      "round1_variants": [
+        {
+          "variant_query": "ICX operator licensing fees",
+          "n_results": 2,
+          "results": [
+            {
+              "doc_name": "Telecom Act",
+              "chapter": "Chapter IV",
+              "section": "Licensing Fees",
+              "subsection_id": "4.05",
+              "subsection_text": "ICX operators shall pay an annual licence fee equal to a percentage of audited gross revenue.",
+              "score": 0.71,
+              "relevance_score": 0.71,
+              "base_score": 0.71,
+              "seq": 40
+            },
+            {
+              "doc_name": "Telecom Act",
+              "chapter": "Chapter IV",
+              "section": "Licensing Fees",
+              "subsection_id": "4.06",
+              "subsection_text": "An acquisition fee is payable on grant of the licence.",
+              "score": 0.52,
+              "relevance_score": 0.52,
+              "base_score": 0.52,
+              "seq": 41
+            }
+          ]
+        },
+        {
+          "variant_query": "ICX operator renewal conditions",
+          "n_results": 2,
+          "results": [
+            {
+              "doc_name": "Telecom Act",
+              "chapter": "Chapter IV",
+              "section": "Renewal",
+              "subsection_id": "5.01",
+              "subsection_text": "A licence may be renewed on application not less than 180 days before expiry.",
+              "score": 0.66,
+              "relevance_score": 0.66,
+              "base_score": 0.66,
+              "seq": 55
+            },
+            {
+              "doc_name": "Telecom Act",
+              "chapter": "Chapter IV",
+              "section": "Renewal",
+              "subsection_id": "5.02",
+              "subsection_text": "Renewal is subject to compliance with all prior obligations.",
+              "score": 0.49,
+              "relevance_score": 0.49,
+              "base_score": 0.49,
+              "seq": 56
+            }
+          ]
+        }
+      ],
+      "merged_candidates": 4,
+      "deduped_candidates": 4,
+      "two_call_enabled": true,
+      "gap_analysis": {
+        "reasoning": "Fees are covered but renewal timing was thin in round 1.",
+        "sufficient": false,
+        "missing_info": "Exact renewal application window.",
+        "followup_queries": [
+          "ICX licence renewal application deadline days"
+        ]
+      },
+      "round2_variants": [
+        {
+          "variant_query": "ICX licence renewal application deadline days",
+          "n_results": 1,
+          "results": [
+            {
+              "doc_name": "Telecom Act",
+              "chapter": "Chapter IV",
+              "section": "Renewal",
+              "subsection_id": "5.01",
+              "subsection_text": "A licence may be renewed on application not less than 180 days before expiry.",
+              "score": 0.69,
+              "relevance_score": 0.69,
+              "seq": 55
+            }
+          ]
+        }
+      ],
+      "round2_added": 0,
+      "reranked_chunks": [
+        {
+          "doc_name": "Telecom Act",
+          "chapter": "Chapter IV",
+          "section": "Licensing Fees",
+          "subsection_id": "4.05",
+          "subsection_text": "An acquisition fee is payable on grant of the licence.\n\nICX operators shall pay an annual licence fee equal to a percentage of audited gross revenue.",
+          "score": 0.71,
+          "relevance_score": 0.71,
+          "base_score": 0.71,
+          "seq": 40,
+          "hier_doc_name_rank": 0,
+          "hier_chapter_rank": 0,
+          "hier_section_rank": 0,
+          "neighbor_expanded": true,
+          "neighbor_decision": "medium",
+          "neighbor_added": {
+            "prev": [
+              0.55
+            ],
+            "next": []
+          }
+        },
+        {
+          "doc_name": "Telecom Act",
+          "chapter": "Chapter IV",
+          "section": "Renewal",
+          "subsection_id": "5.01",
+          "subsection_text": "A licence may be renewed on application not less than 180 days before expiry.",
+          "score": 0.66,
+          "relevance_score": 0.66,
+          "base_score": 0.66,
+          "seq": 55,
+          "hier_section_rank": 1,
+          "neighbor_decision": "high"
+        }
+      ],
+      "final_chunks": [
+        {
+          "doc_name": "Telecom Act",
+          "chapter": "Chapter IV",
+          "section": "Licensing Fees",
+          "subsection_id": "4.05",
+          "subsection_text": "An acquisition fee is payable on grant of the licence.\n\nICX operators shall pay an annual licence fee equal to a percentage of audited gross revenue.",
+          "score": 0.71,
+          "relevance_score": 0.71,
+          "base_score": 0.71,
+          "seq": 40,
+          "hier_doc_name_rank": 0,
+          "hier_chapter_rank": 0,
+          "hier_section_rank": 0,
+          "neighbor_expanded": true,
+          "neighbor_decision": "medium",
+          "neighbor_added": {
+            "prev": [
+              0.55
+            ],
+            "next": []
+          }
+        },
+        {
+          "doc_name": "Telecom Act",
+          "chapter": "Chapter IV",
+          "section": "Renewal",
+          "subsection_id": "5.01",
+          "subsection_text": "A licence may be renewed on application not less than 180 days before expiry.",
+          "score": 0.66,
+          "relevance_score": 0.66,
+          "base_score": 0.66,
+          "seq": 55,
+          "hier_section_rank": 1,
+          "neighbor_decision": "high"
+        }
+      ],
+      "answer": "ICX operators pay an annual licence fee set as a percentage of audited gross revenue, plus an acquisition fee on grant of the licence. A licence may be renewed by applying at least 180 days before expiry, subject to compliance with prior obligations.",
+      "reference": null,
+      "elapsed_seconds": 3.2
+    }
+  ]
+}

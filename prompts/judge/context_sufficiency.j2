@@ -1,0 +1,21 @@
+You are evaluating whether a retrieval system fetched sufficient information.
+
+### QUERY
+{{ query }}
+
+### RETRIEVED CHUNKS
+{{ chunks_str }}
+
+### TASK
+First, think through your reasoning step by step in the `reasoning` field, then produce the score.
+
+Judge whether these chunks contain enough information to fully and accurately answer the query.
+
+Use this rubric for the `sufficiency` score:
+- 5: Chunks contain all information needed for a complete answer.
+- 4: Chunks cover the question well; minor details might be missing.
+- 3: Chunks contain partial information — some aspects can be answered but others cannot.
+- 2: Chunks touch the topic but answer only a small fragment of the question.
+- 1: Chunks contain little to no useful information for this query.
+
+Also describe what specific information is missing (or write "none" if complete).

@@ -1,0 +1,24 @@
+You are evaluating whether a generated response is faithful to its source documents.
+
+### QUERY
+{{ query }}
+
+### SOURCE CHUNKS (what the system retrieved)
+{{ chunks_str }}
+
+### GENERATED RESPONSE (what the system answered)
+{{ response }}
+
+### TASK
+First, think step by step in the `reasoning` field. Walk through the response one claim at a time
+and check whether each claim is supported by the source chunks. Then produce the scores.
+
+Use this rubric for the `faithfulness` score:
+- 5: Every claim in the response can be traced back to the chunks.
+- 4: Almost every claim supported; one minor unsupported addition.
+- 3: Most claims supported, but several are added without source support.
+- 2: Many claims unsupported; response invents details not in the chunks.
+- 1: The response contains many claims not found in the chunks (heavy hallucination).
+
+In `hallucinated_claims`, list specific claims in the response that have no support in the chunks.
+Write "None" if all claims are properly grounded.

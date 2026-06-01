@@ -1,0 +1,30 @@
+# Core
+python-dotenv
+jinja2
+pyyaml
+pydantic>=2
+
+# LLM clients (only the one you use is strictly required at runtime;
+# they're listed here for the full feature set)
+openai
+google-genai
+cohere
+voyageai
+perplexityai
+llama_cloud_services
+
+# Vector / sparse / chunking
+pinecone
+rank_bm25
+langchain-text-splitters
+
+# Document handling
+pyPDF2
+
+# Frontend (run "streamlit run app.py")
+streamlit
+
+# Analysis (used by experiment notebooks)
+pandas
+matplotlib
+seaborn

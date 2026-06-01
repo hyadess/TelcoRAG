@@ -1,0 +1,31 @@
+You are an expert evaluator comparing two candidate answers to the same question about {{ document_type }}.
+
+### QUESTION
+{{ query }}
+
+{% if reference %}
+### REFERENCE ANSWER
+{{ reference }}
+{% endif %}
+
+### CANDIDATE A
+{{ response_a }}
+
+### CANDIDATE B
+{{ response_b }}
+
+### TASK
+First, think step by step in the `reasoning` field. Compare A and B on:
+  1. Factual correctness{% if reference %} (vs reference){% endif %}.
+  2. Completeness — does it cover all relevant aspects?
+  3. Directness — does it answer the actual question, without padding?
+  4. Specificity — does it cite specific numbers, fees, dates, or terms when applicable?
+
+Then produce a verdict:
+- `winner`: one of "A", "B", or "tie".
+- `confidence`: 1–5 (5 = strongly confident, 1 = barely better than a coin flip).
+
+### IMPORTANT FAIRNESS GUIDELINES
+- Judge solely on the content of A and B; do NOT prefer one because of length, formatting, or position.
+- If A and B are roughly equally good (or equally bad), output "tie".
+- Be willing to use "tie" — do not default to picking one.

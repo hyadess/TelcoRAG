@@ -1,0 +1,98 @@
+# =============================================================================
+# Pipeline strategy configuration
+#
+# Edit this file to switch between strategies — no code changes needed.
+#
+# embedder and reranker are INDEPENDENT choices (any embedder works with the
+# cross-encoder voyage/cohere rerankers, or rrf/llm/none).
+# =============================================================================
+
+# --- Component selection (independent choices) ---
+embedder:        voyage       # openai | gemini | cohere | voyage | perplexity
+chunker:         baseline      # baseline (single indexing convention)
+query_strategy:  decompose     # simple | decompose | diversify | abstract | hyde
+retriever:       hierarchical  # vector | bm25 | hybrid | hierarchical
+reranker:        voyage        # voyage | cohere | rrf | llm | none
+
+# --- Model names per provider (override defaults from config/settings.py) ---
+models:
+  embedding:
+    openai:     text-embedding-3-large
+    gemini:     gemini-embedding-001
+    cohere:     embed-multilingual-v3.0
+    voyage:     voyage-law-2
+    perplexity: pplx-embed-v1-4b
+  reranking:
+    cohere:     rerank-v3.5
+    voyage:     rerank-2.5
+
+embedding_dimensions: null
+
+# --- Optional post-processing on retrieved chunks (run in order) ---
+post_processing:
+  - dedupe
+  - relevance_filter
+  # - mmr
+
+# --- Models for response generation and evaluation ---
+response_model:  gemini
+judge_model:     gemini
+
+# --- Retrieval parameters ---
+retrieval:
+  top_k: 30                   # how many vectors to fetch per (sub-)query
+  rerank_top_k: 20            # how many to keep after reranking
+  relevance_threshold: 0.01   # drop reranked chunks below this score (0 = disabled)
+  mmr_lambda: 0.7
+
+# --- Hybrid retriever parameters (only used when retriever == "hybrid") ---
+hybrid:
+  rrf_k: 60
+  bm25_weight: 0.5
+
+# --- Two-call (corrective) retrieval -----------------------------------------
+# After round 1, an LLM checks the MAIN query against the retrieved chunks. If
+# it judges information is missing, it proposes follow-up queries; those run a
+# second retrieval round (reformulated again by the chosen operator, so
+# multi-query operators fan out), the new chunks are merged, and everything is
+# reranked against the MAIN query. Works with any retriever / operator.
+two_call:
+  enabled:     false          # set true to enable the second corrective round
+  max_rounds:  1              # number of extra rounds after round 1
+
+# --- Hierarchical retriever parameters (only used when retriever == "hierarchical") ---
+# Coarse-to-fine, structure-aware dense retrieval.
+hierarchical:
+  pool_factor: 3              # broad candidate pool = pool_factor * top_k
+  count_bonus: 0.25           # weight on a group's mean member score when ranking
+  level_bonus: 0.10           # score bonus for chunks in a kept group (decays by rank)
+
+  # MODULAR multi-level filtering: keep top groups down the hierarchy, outermost
+  # first. Drop or reorder levels freely (e.g. remove doc_name for a single-doc
+  # KB, or keep only section to reproduce the old section-only behaviour).
+  levels:
+    - {field: doc_name, top_n: 3}
+    - {field: chapter,  top_n: 4}
+    - {field: section,  top_n: 5}
+
+  # SIBLING expansion: per surviving group, run a metadata-filtered query to
+  # surface missed subsections.
+  expand_siblings:      true
+  sibling_level:        section   # metadata field siblings are filtered on
+  siblings_per_section: 5
+
+  # NEIGHBOUR expansion: for a hit whose relevance is *medium*, splice in the
+  # contiguous reading-order neighbours (prev/next, up to max_hops) that clear a
+  # moderate threshold. High hits already contain the answer; very low ones
+  # don't — neither is expanded. All thresholds are cosine similarities in 0..1.
+  expand_neighbors:  true
+  neighbor_high:     0.65      # >= : answer already present -> no expansion
+  neighbor_low:      0.30      # <= : answer absent          -> no expansion
+  neighbor_moderate: 0.40      # neighbour must clear this to be spliced in
+  neighbor_max_hops: 2         # expand at most prev2 / next2
+
+# --- Chunking parameters (ingestion-time) ---
+chunking:
+  max_size: 2048
+  overlap: 204
+  neighbor_window: 2          # how many prev/next neighbour ids to record per chunk

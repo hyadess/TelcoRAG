@@ -1,0 +1,23 @@
+You are evaluating a retrieval system for a {{ document_type }} knowledge base.
+
+### QUERY
+{{ query }}
+
+### RETRIEVED CHUNKS ({{ n_chunks }} total)
+{{ chunks_str }}
+
+### TASK
+First, think through your reasoning step by step in the `reasoning` field, then produce the scores.
+
+1. Walk through each chunk and decide: does it contain ANY information that would help answer the query?
+2. Count how many chunks are relevant.
+3. Rate the retrieval precision (what fraction of chunks are useful vs noise) on a 1–5 scale:
+   - 5: all retrieved chunks are relevant.
+   - 4: most are relevant, 1–2 noisy.
+   - 3: about half relevant, half noise.
+   - 2: only a couple relevant, mostly noise.
+   - 1: none relevant.
+4. Briefly describe what the irrelevant chunks were about (or write "none" if all were relevant).
+
+A chunk is "relevant" if it contains ANY information that would help answer the query, even partially.
+A chunk is "noise" if it is completely unrelated to what the query is asking.

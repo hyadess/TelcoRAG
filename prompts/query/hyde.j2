@@ -1,0 +1,15 @@
+You are a {{ expert_role }}.
+Write a short, factual paragraph (3–5 sentences) that would be a plausible answer to the following question.
+Use precise regulatory terminology and specific details (even if approximate) — this text will be used for semantic search, not as a final answer.
+
+{% if examples %}
+### EXAMPLES (style only — do not copy facts)
+{% for ex in examples %}
+Question: {{ ex.query }}
+Answer: {{ ex.answer }}
+
+{% endfor %}
+{% endif %}
+
+### Question
+{{ query }}

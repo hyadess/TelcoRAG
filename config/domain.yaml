@@ -1,0 +1,26 @@
+# =============================================================================
+# Domain wording — change this if your knowledge base is not telecom legal docs.
+# Every prompt that mentions the domain reads from here.
+# =============================================================================
+
+# Short label used in role descriptions ("a {{ domain }} legal assistant")
+domain: "Bangladesh telecommunications regulations"
+
+# One-word tag for prompts that need a shorter form
+domain_short: "telecom"
+
+# Expert role for HyDE / step-back prompts
+expert_role: "Bangladesh telecommunications regulatory expert"
+
+# Document type — used in the response generator's system framing
+document_type: "telecommunications legal documents"
+
+# Few terminology hints injected into query reformulation prompts.
+# These help the model rewrite layman words into regulatory language.
+# Format: a list of "casual term -> regulatory term" pairs.
+terminology_hints:
+  - "internet company -> ISP licensee"
+  - "phone tower -> telecommunications infrastructure"
+  - "fee -> license fee / annual fee / acquisition fee"
+  - "permit -> license"
+  - "regulator -> the Commission"

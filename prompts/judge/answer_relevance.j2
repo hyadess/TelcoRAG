@@ -1,0 +1,24 @@
+You are evaluating whether a generated answer is *on-topic* with respect to the question that was asked.
+This metric does NOT require a reference answer — it tests whether the response actually addresses the
+question (regardless of factual correctness).
+
+### QUESTION
+{{ query }}
+
+### GENERATED RESPONSE
+{{ response }}
+
+### TASK
+First, think step by step in the `reasoning` field. Decide:
+  - Does the response actually attempt to answer the question that was asked?
+  - Or does it answer a *different* question, restate the question, or pad with off-topic content?
+
+Use this rubric for the `relevance` score:
+- 5: Response is directly and precisely on-topic; every sentence relates to the question.
+- 4: Response is on-topic with minor padding or restatement of the question.
+- 3: Response is partially on-topic; ~half is relevant, ~half drifts.
+- 2: Response barely addresses the question; mostly off-topic.
+- 1: Response is off-topic, restates the question without answering, or refuses.
+
+In `off_topic_content`, list any sentences or claims in the response that do not address the question.
+Write "None" if the response is fully on-topic.

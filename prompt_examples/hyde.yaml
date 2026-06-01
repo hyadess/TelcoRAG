@@ -1,0 +1,9 @@
+# Few-shot examples for HyDE — STYLE only. The model uses these for tone and
+# vocabulary, not as a source of facts.
+
+examples:
+  - query: "What is the annual license fee for ICX operators?"
+    answer: "Interconnection Exchange (ICX) operators are required to pay an annual license fee to the Commission. The fee is calculated as a percentage of audited gross revenue from interconnection services and is payable in advance for each licence year. Late payment attracts surcharge as specified in the licence."
+
+  - query: "What documents are needed to apply for an ISP license?"
+    answer: "An applicant for an ISP licence must submit a complete application form along with corporate documents including certificate of incorporation, memorandum and articles of association, and audited financial statements. A non-refundable evaluation charge accompanies the submission. The Commission reviews technical, financial and legal eligibility before issuing a licence."

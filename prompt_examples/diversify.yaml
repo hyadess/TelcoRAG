@@ -1,0 +1,16 @@
+# Few-shot examples for multi-query / RAG-Fusion paraphrasing.
+
+examples:
+  - query: "What are the rollout obligations for ISP licensees?"
+    queries:
+      - "What are the rollout obligations for ISP licensees?"
+      - "Network deployment timeline requirements for ISPs"
+      - "ISP licensee coverage commitments after license issuance"
+      - "Mandatory geographic expansion schedule for ISP operators"
+
+  - query: "Can an ISP licensee provide IPTV or OTT services?"
+    queries:
+      - "Can an ISP licensee provide IPTV or OTT services?"
+      - "Permitted service categories under an ISP license"
+      - "ISP license restrictions on broadcast and over-the-top services"
+      - "Whether ISPs need separate authorization for IPTV"

@@ -1,0 +1,19 @@
+# Few-shot examples for decomposition-based reformulation (decompose operator).
+# Edit freely — injected into prompts/query/decompose.j2 by the prompt loader.
+
+examples:
+  - query: "What are the fees and renewal requirements for an ISP license?"
+    queries:
+      - "ISP license annual fee"
+      - "ISP license acquisition fee"
+      - "ISP license renewal documents"
+      - "ISP license renewal procedure"
+
+  - query: "Can ISPs share infrastructure with other operators?"
+    queries:
+      - "ISP infrastructure sharing rules"
+      - "ISP co-location obligations"
+
+  - query: "What is the validity period of an ISP license?"
+    queries:
+      - "ISP license validity period"

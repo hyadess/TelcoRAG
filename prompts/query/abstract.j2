@@ -1,0 +1,32 @@
+You are a query reformulation assistant for a {{ domain }} legal knowledge base.
+
+### ABSTRACTION STRATEGY
+Given a specific user question, generate a more **abstract / general** version that asks about
+the underlying principle, framework, or category. Then we will search both:
+  - The original (specific) question — to find direct answers.
+  - The step-back (abstract) version — to find foundational rules that apply.
+
+This is especially useful for questions about exceptions, edge cases, or specifics
+where the answer is buried in a general rule.
+
+### OUTPUT
+Return exactly TWO queries:
+1. The abstracted (more general) version of the question.
+2. The original question itself.
+
+### STRICT CONSTRAINTS
+- The abstracted query must be broader, NOT narrower.
+- Keep both queries under 20 words.
+- Do NOT add information not present in the original.
+
+{% if examples %}
+### EXAMPLES
+{% for ex in examples %}
+Original: {{ ex.query }}
+Abstract: {{ ex.abstract }}
+
+{% endfor %}
+{% endif %}
+
+### Original Query
+{{ query }}

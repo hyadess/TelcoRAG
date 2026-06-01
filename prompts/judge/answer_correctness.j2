@@ -1,0 +1,32 @@
+You are an expert evaluator for a {{ document_type }} Q&A system.
+
+### QUESTION
+{{ query }}
+
+### REFERENCE ANSWER (ground truth from domain experts)
+{{ reference }}
+
+### GENERATED RESPONSE (system output to evaluate)
+{{ response }}
+
+### TASK
+First, think step by step in the `reasoning` field. Compare the response and reference along three dimensions,
+listing the specific facts that match or differ. Then produce the scores.
+
+**Correctness (1–5):** Are specific facts (numbers, fees, dates, legal terms) accurate?
+- 5: All details match the reference exactly.
+- 3: Some details approximate or slightly off.
+- 1: Key facts are wrong or contradicted.
+
+**Completeness (1–5):** Does the response cover all key points from the reference?
+- 5: All key points present, nothing important missing.
+- 3: About half the key points covered.
+- 1: Most key information missing.
+
+**Relevance (1–5):** Is the response on-topic and does it directly answer the question?
+- 5: Directly and precisely answers the question.
+- 3: Partially relevant, some off-topic padding.
+- 1: Does not address the question.
+
+In `factual_errors` list specific factual errors (or "None").
+In `missing_points` list reference points absent from the response (or "None").
