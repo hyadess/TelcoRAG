@@ -21,7 +21,7 @@ example shapes).
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Optional
 
 import yaml
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, TemplateNotFound

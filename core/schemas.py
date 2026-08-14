@@ -112,12 +112,9 @@ class FaithfulnessScore(BaseModel):
 
 
 class AnswerCorrectnessScore(BaseModel):
-    reasoning: str = Field(..., description="Step-by-step comparison with the reference.")
+    reasoning: str = Field(..., description="Concise evidence-based justification for the score.")
     correctness: int = Field(..., ge=1, le=5)
-    completeness: int = Field(..., ge=1, le=5)
-    relevance: int = Field(..., ge=1, le=5)
     factual_errors: str
-    missing_points: str
 
 
 class AnswerRelevanceScore(BaseModel):

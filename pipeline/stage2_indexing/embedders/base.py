@@ -2,7 +2,7 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, List
 
 from clients.pinecone_client import PineconeDB
 

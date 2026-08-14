@@ -15,7 +15,7 @@ of `batch_size`. Failures fall back to the candidate's original score.
 
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from clients.gemini import general_response
 from core.registry import RERANKERS

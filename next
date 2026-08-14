@@ -1,8 +1,0 @@
-some updates:
-
-why answer-correctness judge has completeness and relevance inside its prompt again? ..cause relevance is redundant. the prompt should only contain scale for correctness. also, all the queries has reference answer/ text (book parts used to solve that question). use the reference in judges!!!
-also, to neighbor chunks may share the same subsection text as there are some splitted subsection. so, check first before concatenation. also, comparing two text should be punctuation, capital, and others insensitive. make the comparison flexible where needed. also, inside every module/folder, write MD files explaining that module so that it becomes easy for me to update and read if necessary.
-
-in chunker, there is base and baseline. redundancy. just remove chunker option from pipeline yaml. there is no need of many option
-
-two call is a retrieval approach. just merge all retrievals from 1st call, create a new query using llm from original query and 1st call retrievals. and retrieve again. it is not a new axis of expriment!!!. it is just another retrieval way. 

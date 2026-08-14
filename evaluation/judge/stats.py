@@ -50,7 +50,7 @@ def compare_experiments(
     """Side-by-side comparison printed to stdout."""
     keys = [
         "ctx_precision", "ctx_sufficiency", "faithfulness",
-        "correctness", "completeness", "relevance", "answer_relevance",
+        "correctness", "answer_relevance",
         "retrieval_score", "generation_score", "overall_score",
     ]
     sa = compute_summary(results_a, keys)

@@ -20,6 +20,9 @@ design:
 Run:  python tests_offline.py
 """
 
+# SDK stubs must be installed before application imports.
+# ruff: noqa: E402
+
 import sys
 import types
 
@@ -55,8 +58,9 @@ sys.modules["dotenv"].load_dotenv = lambda *a, **k: None
 
 
 # --- imports ---------------------------------------------------------------
-from core.registry import CHUNKERS, QUERY_STRATEGIES, RETRIEVERS, discover_plugins
-from core.schemas import GapAnalysis
+from core.registry import CHUNKERS, QUERY_STRATEGIES, RERANKERS, RETRIEVERS, discover_plugins
+from core.schemas import AnswerCorrectnessScore, GapAnalysis
+from clients.llm_retry import LLMRetryPolicy, call_with_retry
 from pipeline.stage2_indexing.bm25_index import BM25Index
 from pipeline.stage2_indexing.sequencing import assign_neighbors
 from pipeline.stage3_retrieval.refinement import analyze_gap
@@ -76,6 +80,57 @@ def check(name, cond):
     else:
         FAIL += 1
         print(f"  FAIL  {name}")
+
+
+print("== service clients ==")
+import clients.cohere_client as cohere_client
+import clients.voyage_client as voyage_client
+
+cohere_client._client = object()
+voyage_client._client = object()
+check("Cohere get_client returns the cached client",
+      cohere_client.get_client() is cohere_client._client)
+check("Voyage get_client returns the cached client",
+      voyage_client.get_client() is voyage_client._client)
+check("correctness schema has no duplicate completeness/relevance fields",
+      set(AnswerCorrectnessScore.model_fields) == {"reasoning", "correctness", "factual_errors"})
+
+retry_attempts = []
+
+
+def fail_once_then_succeed():
+    retry_attempts.append(1)
+    if len(retry_attempts) == 1:
+        raise TimeoutError("simulated provider timeout")
+    return "ok"
+
+
+retry_result = call_with_retry(
+    fail_once_then_succeed,
+    operation="offline retry test",
+    logger=__import__("logging").getLogger("OfflineTest"),
+    policy=LLMRetryPolicy(timeout_seconds=180, max_attempts=2),
+)
+check("LLM failures are retried once", retry_result == "ok" and len(retry_attempts) == 2)
+check("default LLM timeout is three minutes",
+      LLMRetryPolicy().timeout_seconds == 180)
+
+print("== rerankers ==")
+discover_plugins()
+passthrough = RERANKERS.build("none")
+reranked = passthrough.rerank(
+    "q", [{"id": "chunk-1", "subsection_text": "text", "score": 0.8}], top_k=1
+)
+check("reranking preserves stable chunk ids", reranked[0]["id"] == "chunk-1")
+rrf = RERANKERS.build("rrf", k=60)
+fused = rrf.rerank_multi(
+    [
+        [{"id": "shared", "subsection_text": "shared"}, {"id": "a", "subsection_text": "a"}],
+        [{"id": "shared", "subsection_text": "shared"}, {"id": "b", "subsection_text": "b"}],
+    ],
+    top_k=3,
+)
+check("multi-query RRF rewards documents found by both rankings", fused[0]["id"] == "shared")
 
 
 SUB = {

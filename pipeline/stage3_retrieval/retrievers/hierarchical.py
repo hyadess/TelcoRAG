@@ -108,10 +108,20 @@ class HierarchicalRetriever(BaseRetriever):
     # ------------------------------------------------------------------
     def _matches_to_dicts(self, result) -> List[Dict[str, Any]]:
         out = []
-        for match in result["matches"]:
-            entry = dict(match["metadata"])
-            entry["id"] = match.get("id", entry.get("id", ""))
-            entry["score"] = float(match["score"])
+        matches = getattr(result, "matches", None)
+        if matches is None and isinstance(result, dict):
+            matches = result.get("matches", [])
+        for match in matches or []:
+            metadata = getattr(match, "metadata", None)
+            match_id = getattr(match, "id", None)
+            score = getattr(match, "score", None)
+            if isinstance(match, dict):
+                metadata = match.get("metadata", metadata)
+                match_id = match.get("id", match_id)
+                score = match.get("score", score)
+            entry = dict(metadata or {})
+            entry["id"] = match_id or entry.get("id", "")
+            entry["score"] = float(score or 0.0)
             out.append(entry)
         return out
 

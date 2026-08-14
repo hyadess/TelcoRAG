@@ -8,10 +8,10 @@
 # =============================================================================
 
 # --- Component selection (independent choices) ---
-embedder:        voyage       # openai | gemini | cohere | voyage | perplexity
+embedder:        gemini       # openai | gemini | cohere | voyage | perplexity
 chunker:         baseline      # baseline (single indexing convention)
 query_strategy:  decompose     # simple | decompose | diversify | abstract | hyde
-retriever:       hierarchical  # vector | bm25 | hybrid | hierarchical
+retriever:       vector  # vector | bm25 | hybrid | hierarchical
 reranker:        voyage        # voyage | cohere | rrf | llm | none
 
 # --- Model names per provider (override defaults from config/settings.py) ---

@@ -5,10 +5,8 @@ This is a RAGAS-style reference-free metric. It works without ground truth,
 which makes it useful for sanity-checking the system on queries you don't have
 expert answers for.
 
-Distinct from `answer_correctness.relevance`: that one factors in the reference
-('does the response match the reference's view of what the answer should be?').
-This one ignores correctness entirely — it only asks whether the response is
-*on-topic*. A response that is completely wrong but on-topic gets a 5 here.
+This module ignores correctness entirely and asks only whether the response is
+*on-topic*. A response that is completely wrong but on-topic can still score 5.
 """
 
 from typing import Any, Dict, List, Optional

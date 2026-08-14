@@ -30,10 +30,7 @@ class AnswerCorrectnessJudge(BaseJudgeModule):
             # Reference-required module — skip cleanly if missing
             return {
                 "correctness": 0,
-                "completeness": 0,
-                "relevance": 0,
                 "factual_errors": "NO_REFERENCE",
-                "missing_points": "NO_REFERENCE",
                 "correctness_reasoning": "",
             }
 
@@ -48,17 +45,11 @@ class AnswerCorrectnessJudge(BaseJudgeModule):
         if result is None:
             return {
                 "correctness": 0,
-                "completeness": 0,
-                "relevance": 0,
                 "factual_errors": "JUDGE_ERROR",
-                "missing_points": "JUDGE_ERROR",
                 "correctness_reasoning": "",
             }
         return {
             "correctness": result.correctness,
-            "completeness": result.completeness,
-            "relevance": result.relevance,
             "factual_errors": result.factual_errors,
-            "missing_points": result.missing_points,
             "correctness_reasoning": result.reasoning,
         }

@@ -102,8 +102,9 @@ Plus a ranked `data/experiments/leaderboard.csv`. Labels encode the axes, e.g.
 ## 5. Reading the metrics
 
 `retrieval_score`, `generation_score`, and `overall_score` are composites of the
-judge modules (context precision/sufficiency, faithfulness, correctness,
-completeness, relevance, answer relevance), excluding not-evaluated metrics.
+available non-zero judge metrics. Retrieval combines context precision and
+sufficiency; generation combines faithfulness, answer correctness, and answer
+relevance. Metrics that were not evaluated are excluded.
 Use `--pairwise` for head-to-head deltas with position-bias mitigation. For a
 qualitative read, open the combo's `run.json` in the viewer and inspect where
 neighbour/sibling expansion or the two-call round changed the final chunks.

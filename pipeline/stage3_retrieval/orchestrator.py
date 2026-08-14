@@ -112,6 +112,7 @@ class RetrievalPipeline:
         query: str,
         retrieval_top_k: int,
         record: List[Dict[str, Any]],
+        rankings: Optional[List[List[Dict[str, Any]]]] = None,
     ) -> List[Dict[str, Any]]:
         """Reformulate `query`, retrieve each variant, append per-variant records.
 
@@ -122,6 +123,8 @@ class RetrievalPipeline:
         for q in reformulated.queries:
             results = self.retriever.search(q, top_k=retrieval_top_k)
             record.append({"variant_query": q, "n_results": len(results), "results": results})
+            if rankings is not None:
+                rankings.append(results)
             candidates.extend(results)
         return candidates
 
@@ -137,7 +140,10 @@ class RetrievalPipeline:
 
         # --- Round 1 ---
         round1_records: List[Dict[str, Any]] = []
-        candidates = self._retrieve_round(query, retrieval_top_k, round1_records)
+        rankings: List[List[Dict[str, Any]]] = []
+        candidates = self._retrieve_round(
+            query, retrieval_top_k, round1_records, rankings=rankings
+        )
         trace.round1_variants = round1_records
         trace.reformulated_queries = [r["variant_query"] for r in round1_records]
         trace.merged_candidates = len(candidates)
@@ -166,7 +172,9 @@ class RetrievalPipeline:
                 seen = {c.get("subsection_text", "") for c in current}
                 for fq in gap.followup_queries:
                     r2_records: List[Dict[str, Any]] = []
-                    new_cands = self._retrieve_round(fq, retrieval_top_k, r2_records)
+                    new_cands = self._retrieve_round(
+                        fq, retrieval_top_k, r2_records, rankings=rankings
+                    )
                     trace.round2_variants.extend(r2_records)
                     for c in new_cands:
                         txt = c.get("subsection_text", "")
@@ -183,7 +191,10 @@ class RetrievalPipeline:
             return trace
 
         # --- Rerank against the MAIN query ---
-        reranked = self.reranker.rerank(query, candidates, top_k=rerank_top_k)
+        if hasattr(self.reranker, "rerank_multi"):
+            reranked = self.reranker.rerank_multi(rankings, top_k=rerank_top_k)
+        else:
+            reranked = self.reranker.rerank(query, candidates, top_k=rerank_top_k)
         trace.reranked_chunks = reranked
         logger.info(f"Reranker produced {len(reranked)} chunks")
 

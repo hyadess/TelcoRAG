@@ -1,6 +1,6 @@
-"""Gemini embedder — uses google.genai's embed_content endpoint.
+"""Vertex AI Gemini embedder — uses google.genai's embed_content endpoint.
 
-Spec: https://ai.google.dev/gemini-api/docs/embeddings
+Spec: https://cloud.google.com/vertex-ai/generative-ai/docs/embeddings/get-text-embeddings
 
 Important fixes over the previous implementation:
 
@@ -19,13 +19,11 @@ Important fixes over the previous implementation:
 """
 
 import math
-import os
 from typing import List, Optional
 
-from dotenv import load_dotenv
-from google import genai
 from google.genai import types
 
+from clients.gemini import create_vertex_client
 from config.settings import (
     EMBED_BATCH_SIZE,
     get_embedding_dimensions,
@@ -35,10 +33,6 @@ from config.settings import (
 from core.registry import EMBEDDERS
 
 from .base import BaseEmbedder
-
-load_dotenv()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
 
 # Default output dimensions per Gemini embedding model.
 _DEFAULT_DIMS = {
@@ -62,13 +56,14 @@ class GeminiEmbedder(BaseEmbedder):
     def __init__(self):
         super().__init__(
             model=get_embedding_model("gemini"),
-            api_key=GEMINI_API_KEY,
+            # Vertex AI authenticates with Google credentials, not an API key.
+            api_key="",
             index_name=get_embedding_index("gemini"),
         )
         self._user_dims: Optional[int] = get_embedding_dimensions()
 
     def _initialize_client(self):
-        return genai.Client(api_key=self.api_key)
+        return create_vertex_client()
 
     @property
     def dimension(self) -> int:

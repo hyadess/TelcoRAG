@@ -19,7 +19,7 @@ import logging
 import pickle
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 logger = logging.getLogger("BM25Index")
 

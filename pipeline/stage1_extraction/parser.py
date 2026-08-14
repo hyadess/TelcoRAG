@@ -8,8 +8,6 @@ lets the API key rotator distribute load.
 
 import logging
 import os
-from typing import Optional
-
 from PyPDF2 import PdfReader, PdfWriter
 from llama_cloud_services import LlamaParse
 

@@ -93,7 +93,7 @@ BM25_RETRIEVERS = {"bm25", "hybrid"}
 LEADERBOARD_METRICS = [
     "overall_score", "retrieval_score", "generation_score",
     "ctx_precision", "ctx_sufficiency", "faithfulness",
-    "correctness", "completeness", "relevance", "answer_relevance",
+    "correctness", "answer_relevance",
 ]
 
 

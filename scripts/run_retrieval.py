@@ -86,7 +86,7 @@ def main():
 
     logger.info(f"Wrote {len(recorder.traces)} responses to {args.responses}")
     logger.info(f"Full run trace: {run_path}")
-    logger.info(f"View it with:  streamlit run app.py")
+    logger.info("View it with:  streamlit run app.py")
 
 
 if __name__ == "__main__":

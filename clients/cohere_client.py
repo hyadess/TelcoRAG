@@ -1,24 +1,24 @@
-"""Cohere client — used for embeddings and reranking."""
+"""Lazy, process-wide Cohere client used by rerankers."""
 
-import logging
 import os
-from typing import Optional
-
 from dotenv import load_dotenv
 
 load_dotenv()
-
-logger = logging.getLogger("CohereClient")
-
-API_KEY = os.getenv("COHERE_API_KEY")
 
 # Lazy import to avoid hard dependency if Cohere isn't selected
 _client = None
 
 
 def get_client():
+    """Return the shared Cohere client, creating it on first use."""
     global _client
     if _client is None:
         import cohere
-        _client = cohere.ClientV2(API_KEY)
+
+        api_key = os.getenv("COHERE_API_KEY")
+        if not api_key:
+            raise RuntimeError(
+                "COHERE_API_KEY is not set. Add it to .env before using Cohere."
+            )
+        _client = cohere.ClientV2(api_key=api_key)
     return _client

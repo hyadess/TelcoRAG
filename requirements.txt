@@ -8,6 +8,7 @@ pydantic>=2
 # they're listed here for the full feature set)
 openai
 google-genai
+google-auth
 cohere
 voyageai
 perplexityai
@@ -25,6 +26,7 @@ pyPDF2
 streamlit
 
 # Analysis (used by experiment notebooks)
+numpy
 pandas
 matplotlib
 seaborn

@@ -42,6 +42,7 @@ adapt.
 
 ```
 TelcoRAG/
+├── .env.example               # documented environment variables (copy to .env)
 ├── app.py                     # ← Streamlit run/trace viewer (streamlit run app.py)
 ├── config/
 │   ├── pipeline.yaml          # ← STRATEGY CHOICES (edit me)
@@ -50,8 +51,7 @@ TelcoRAG/
 │
 ├── prompts/                   # ALL prompts as .j2 files
 │   ├── extraction/   document_metadata, page_analysis, subsection_summary
-│   ├── query/        simple, decompose, diversify, abstract, hyde, hyde_short,
-│   │                 gap_analysis (two-call)
+│   ├── query/        decompose, diversify, abstract, hyde, gap_analysis
 │   ├── generation/   answer.j2
 │   └── judge/        context_relevance, context_sufficiency, faithfulness,
 │                     answer_correctness, answer_relevance, pairwise
@@ -94,15 +94,51 @@ TelcoRAG/
 
 ## Setup
 
+Create an isolated environment, install the full dependency set, and copy the
+environment template. The application loads `.env` automatically.
+
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
 pip install -r requirements.txt
-cp .env.example .env            # set PINECONE_API_KEY and GEMINI_API_KEY (+ embedder/reranker keys)
-# drop PDFs into ./resources/
-python -m scripts.run_ingestion     # stage 1 + 2
-python -m scripts.run_retrieval     # run queries → saves a full run trace
-streamlit run app.py                # browse the run + all intermediate logs
-python -m scripts.run_experiments   # full evaluation sweep + leaderboard
+cp .env.example .env
 ```
+
+Fill only the provider keys your configuration uses:
+
+| Variable | Needed for |
+| --- | --- |
+| `PINECONE_API_KEY` | Dense vector indexing and retrieval |
+| `GOOGLE_CLOUD_PROJECT` | Vertex AI project for Gemini calls |
+| `GOOGLE_CLOUD_LOCATION` | Vertex AI region, such as `global` |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Absolute path to a Google credential JSON file with Vertex AI access |
+| `LLAMAPARSE_API_KEYPOOL` | PDF-to-Markdown ingestion; use a Python-style list such as `['key']` |
+| `OPENAI_API_KEY` | OpenAI embeddings |
+| `COHERE_API_KEY` | Cohere embeddings or reranking |
+| `VOYAGE_API_KEY` | Voyage embeddings or reranking |
+| `PERPLEXITY_API_KEY` | Perplexity embeddings |
+
+Never commit `.env`; it is ignored by Git. `.env.example` intentionally contains
+names and placeholders only.
+
+### First run
+
+1. Put source PDFs in `resources/` (or pass a different folder with
+   `--pdf-dir`).
+2. Review `config/pipeline.yaml` and ensure its provider keys are present.
+3. Run ingestion once, then retrieval:
+
+```bash
+python -m scripts.run_ingestion
+python -m scripts.run_retrieval
+streamlit run app.py
+```
+
+Ingestion writes extracted artifacts under `knowledge_base/documents/`, dense
+vectors to Pinecone, and the sparse BM25 index to `.cache/`. Retrieval reads
+queries from `data/good_queries.csv`, writes `data/responses.csv`, and saves a
+self-contained trace under `data/runs/`.
 
 ---
 
@@ -238,6 +274,29 @@ Edit `config/domain.yaml` (`domain`, `expert_role`, `document_type`,
 
 ---
 
+## Evaluation
+
+Create `data/reference_answers.csv` from
+`data/reference_answers_template.csv` when reference-based correctness scores
+are required, then run:
+
+```bash
+python -m scripts.run_experiments --dry-run
+python -m scripts.run_experiments --limit 10
+```
+
+The generation composite contains three non-overlapping signals:
+
+- `faithfulness`: whether claims are supported by retrieved context;
+- `correctness`: whether factual claims agree with the expert reference;
+- `answer_relevance`: whether the response addresses the question.
+
+Correctness deliberately does not score completeness or relevance. Missing
+references produce a not-evaluated score (`0`) and are excluded from composite
+averages. See `experiment.md` for sweep configuration and output layout.
+
+---
+
 ## Testing
 
 ```bash
@@ -249,6 +308,22 @@ embed/BM25 text, chunk sequencing, multi-level hierarchy filtering, the
 neighbour-expansion decision logic, the hierarchical retriever's sibling +
 neighbour expansion end-to-end, and the two-call gap-analysis fallback — all
 without API keys or network.
+
+---
+
+## Troubleshooting
+
+- **Missing credentials:** the selected client reports the exact missing
+  API key or Vertex AI variable. Compare `.env` with `.env.example`.
+- **BM25 index missing:** run ingestion with the same `chunker` before using
+  `bm25` or `hybrid` retrieval.
+- **Pinecone dimension mismatch:** a changed embedding model or
+  `embedding_dimensions` value needs an index with matching dimensions. Index
+  names are defined in `config/settings.py` to prevent accidental cross-model
+  reuse.
+- **No correctness score:** add a query-matched row to
+  `data/reference_answers.csv`; matching trims surrounding whitespace but
+  otherwise uses the query text exactly.
 
 ---
 

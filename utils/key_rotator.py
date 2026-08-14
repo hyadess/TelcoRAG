@@ -43,12 +43,17 @@ def _rotate(env_var: str, state_key: str) -> str:
         raise ValueError(f"{env_var} must be a non-empty list literal")
 
     cfg = _load_config()
-    current = cfg.get(state_key, 0)
+    # -1 makes the first call select key 0; the old default skipped the first
+    # key until the pool wrapped around.
+    current = cfg.get(state_key, -1)
     next_idx = (current + 1) % len(keys)
     cfg[state_key] = next_idx
     _save_config(cfg)
 
-    return keys[next_idx]
+    key = keys[next_idx]
+    if not isinstance(key, str) or not key.strip():
+        raise ValueError(f"{env_var} entries must be non-empty strings")
+    return key.strip()
 
 
 def rotate_llamaparse_key() -> str:

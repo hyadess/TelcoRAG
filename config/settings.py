@@ -37,7 +37,8 @@ CACHE_DIR.mkdir(exist_ok=True)
 # Default model identifiers (overridable from pipeline.yaml -> models.*)
 # =============================================================================
 
-GEMINI_MODEL = "gemini-flash-latest"
+# Vertex AI model ID used for extraction, generation, reformulation, and judges.
+GEMINI_MODEL = "gemini-3.6-flash"
 
 # Default embedding models + matching Pinecone indexes.
 # The `model` here is a fallback when pipeline.yaml's `models.embedding.<name>`

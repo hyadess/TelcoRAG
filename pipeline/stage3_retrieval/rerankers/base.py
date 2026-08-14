@@ -29,6 +29,7 @@ class BaseReranker(ABC):
     def _carry_fields(doc: Dict[str, Any], score: float, index: int) -> Dict[str, Any]:
         """Build the standard reranker output dict for one chunk."""
         out = {
+            "id": doc.get("id", ""),
             "doc_name": doc.get("doc_name", ""),
             "document_summary": doc.get("document_summary", ""),
             "subsection_id": doc.get("subsection_id", ""),

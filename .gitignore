@@ -1,6 +1,14 @@
 .vscode/
 .cache/
 __pycache__/
-*.env
+.env
+.env.*
+!.env.example
 *.log
 *.pyc
+.DS_Store
+*.ruff_cache
+knowledge_base/
+resources/
+todo.txt
+data/

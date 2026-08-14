@@ -62,7 +62,7 @@ def evaluate_query(
 
     # Composite scores
     retrieval_keys = ["ctx_precision", "ctx_sufficiency"]
-    generation_keys = ["faithfulness", "correctness", "completeness", "relevance", "answer_relevance"]
+    generation_keys = ["faithfulness", "correctness", "answer_relevance"]
     row["retrieval_score"] = _safe_avg([row.get(k, 0) for k in retrieval_keys])
     row["generation_score"] = _safe_avg([row.get(k, 0) for k in generation_keys])
     row["overall_score"] = _safe_avg([row["retrieval_score"], row["generation_score"]])
@@ -85,11 +85,22 @@ def evaluate_batch(
     individual modules will skip themselves if their needed inputs are missing.
     """
     discover_plugins()
-    module_names = module_names or FULL_MODULES
+    if module_names is None:
+        module_names = FULL_MODULES
     modules = [JUDGE_MODULES.build(name) for name in module_names]
     logger.info(f"Loaded judge modules: {[m.name for m in modules]}")
 
     n = len(queries)
+    supplied = {
+        "responses": responses,
+        "chunks_per_query": chunks_per_query,
+        "references": references,
+    }
+    for field, values in supplied.items():
+        if values is not None and len(values) != n:
+            raise ValueError(
+                f"{field} must contain {n} item(s) to match queries; got {len(values)}"
+            )
     responses = responses or [None] * n
     chunks_per_query = chunks_per_query or [None] * n
     references = references or [None] * n

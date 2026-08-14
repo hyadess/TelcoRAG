@@ -70,7 +70,7 @@ def main():
         logger.error(f"PDF directory not found: {pdf_dir}")
         return
 
-    pdfs = [f for f in os.listdir(pdf_dir) if f.lower().endswith(".pdf")]
+    pdfs = sorted(f for f in os.listdir(pdf_dir) if f.lower().endswith(".pdf"))
     if not pdfs:
         logger.warning(f"No PDFs found in {pdf_dir}")
         return
