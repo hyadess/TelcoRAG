@@ -83,8 +83,8 @@ class BaseEmbedder(ABC):
     # Public API used by the rest of the pipeline
     # ------------------------------------------------------------------
     def initialize_db(self):
-        """Ensure the vector DB index exists with correct dimensions."""
-        self.vector_db.create_index(dimension=self.dimension, metric="cosine")
+        """Ensure the vector DB index exists; return True if it was created."""
+        return self.vector_db.create_index(dimension=self.dimension, metric="cosine")
 
     def store_documents(self, chunks: List[Dict[str, Any]]):
         """Embed and store a list of chunks. Each chunk must have 'id', 'text', 'metadata'."""

@@ -136,9 +136,22 @@ streamlit run app.py
 ```
 
 Ingestion writes extracted artifacts under `knowledge_base/documents/`, dense
-vectors to Pinecone, and the sparse BM25 index to `.cache/`. Retrieval reads
+vectors to Pinecone, and the sparse BM25 index to `.cache/`. Successful dense
+uploads are recorded per index, namespace, and document in
+`.cache/pinecone_ingestion_tracker.json`; unchanged documents are skipped on
+later ingestion runs. Retrieval reads
 queries from `data/good_queries.csv`, writes `data/responses.csv`, and saves a
 self-contained trace under `data/runs/`.
+
+If you manually delete the selected Pinecone index, force a complete embedding
+rebuild (while still reusing parsed, extracted, and chunked files) with:
+
+```bash
+python -m scripts.run_ingestion --reindex
+```
+
+Freshly recreated Pinecone indexes are also detected automatically and their
+stale tracker entries are cleared.
 
 ---
 

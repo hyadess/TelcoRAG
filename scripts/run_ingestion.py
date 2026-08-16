@@ -6,20 +6,27 @@ For every PDF in ./resources, runs:
   Stage 2: chunks (+ reading-order neighbours) -> embeddings (Pinecone) + BM25 index
 
 Re-running on the same PDF skips stage 1 if a structured_output.json already
-exists, and stage 2 reuses cached chunks. Embeddings are re-upserted (Pinecone
-deduplicates by id); BM25 dedupes by id.
+exists, stage 2 reuses cached chunks, and successfully indexed chunk sets are
+not embedded/upserted again. BM25 dedupes by id.
 
 Usage:
     python -m scripts.run_ingestion
     python -m scripts.run_ingestion --pdf-dir ./my_pdfs --embedder voyage
+    python -m scripts.run_ingestion --reindex  # after manually deleting an index
 """
 
 import argparse
 import logging
 import os
 
-from config.settings import KNOWLEDGE_BASE_DIR, SETTINGS, get_chunker_name
+from config.settings import (
+    KNOWLEDGE_BASE_DIR,
+    SETTINGS,
+    get_chunker_name,
+    get_embedding_index,
+)
 from pipeline.stage1_extraction.orchestrator import DocumentProcessor
+from pipeline.stage2_indexing.ingestion_tracker import IngestionTracker
 from pipeline.stage2_indexing.orchestrator import run_ingestion
 from utils.logging_setup import setup_logging
 
@@ -60,6 +67,17 @@ def main():
                         help="Embedder name (overrides pipeline.yaml).")
     parser.add_argument("--chunker", default=None,
                         help="Chunker name (defaults to pipeline.yaml -> chunker, i.e. baseline).")
+    parser.add_argument(
+        "--reindex",
+        "--reset-index-tracker",
+        action="store_true",
+        dest="reindex",
+        help=(
+            "Forget all tracker records for the selected embedder's Pinecone "
+            "index, then embed every document again. Use after manually "
+            "deleting/recreating the index."
+        ),
+    )
     args = parser.parse_args()
 
     embedder_name = args.embedder or SETTINGS.pipeline["embedder"]
@@ -74,6 +92,15 @@ def main():
     if not pdfs:
         logger.warning(f"No PDFs found in {pdf_dir}")
         return
+
+    if args.reindex:
+        index_name = get_embedding_index(embedder_name)
+        removed = IngestionTracker().clear_index(index_name)
+        logger.info(
+            "Reindex requested: cleared %d tracker record(s) for index [%s]",
+            removed,
+            index_name,
+        )
 
     logger.info(f"Found {len(pdfs)} PDFs. embedder='{embedder_name}', chunker='{chunker_name}'.")
     for pdf in pdfs:

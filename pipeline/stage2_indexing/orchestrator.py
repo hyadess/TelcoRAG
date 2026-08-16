@@ -27,6 +27,7 @@ from config.settings import (
 from core.registry import CHUNKERS, EMBEDDERS, discover_plugins
 
 from .bm25_index import BM25Index
+from .ingestion_tracker import IngestionTracker, chunk_fingerprint, document_key
 from .sequencing import assign_neighbors
 
 logger = logging.getLogger("IngestionPipeline")
@@ -123,7 +124,18 @@ def run_ingestion(
 
     embedder = EMBEDDERS.build(embedder_name)
     embedder.set_namespace(namespace)
-    embedder.initialize_db()
+    index_created = embedder.initialize_db()
+    index_name = embedder.vector_db.index_name
+    tracker = IngestionTracker()
+    if index_created:
+        removed = tracker.clear_index(index_name)
+        if removed:
+            logger.info(
+                "Pinecone index [%s] was newly created; cleared %d stale "
+                "tracker record(s)",
+                index_name,
+                removed,
+            )
 
     chunker = CHUNKERS.build(
         chunker_name,
@@ -134,8 +146,43 @@ def run_ingestion(
     if not chunks:
         return []
 
-    logger.info(f"Embedding and storing {len(chunks)} chunks...")
-    embedder.store_documents(chunks)
+    doc_key = document_key(json_path)
+    fingerprint = chunk_fingerprint(chunks)
+    already_indexed = tracker.is_indexed(
+        index_name=index_name,
+        namespace=namespace,
+        document=doc_key,
+        fingerprint=fingerprint,
+        chunk_count=len(chunks),
+        embedder=embedder_name,
+        model=embedder.model,
+        dimension=embedder.dimension,
+    )
+
+    if already_indexed:
+        logger.info(
+            "Embedding skipped: tracker confirms all %d chunks are already in "
+            "index=[%s], namespace=[%s]",
+            len(chunks),
+            index_name,
+            namespace or "default",
+        )
+    else:
+        logger.info(f"Embedding and storing {len(chunks)} chunks...")
+        embedder.store_documents(chunks)
+        # Never mark a document before store_documents completes: a failed
+        # embedding or partial Pinecone upsert must be retried on the next run.
+        tracker.mark_indexed(
+            index_name=index_name,
+            namespace=namespace,
+            document=doc_key,
+            fingerprint=fingerprint,
+            chunk_count=len(chunks),
+            embedder=embedder_name,
+            model=embedder.model,
+            dimension=embedder.dimension,
+        )
+        logger.info("Recorded successful Pinecone ingestion in %s", tracker.path)
 
     if update_bm25:
         _update_bm25_index(chunks, bm25_index_path(chunker_name))

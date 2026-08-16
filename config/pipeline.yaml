@@ -28,6 +28,13 @@ models:
 
 embedding_dimensions: null
 
+# Minimum gap between calls to each embedding provider. Vertex AI applies a
+# per-minute input-token quota to Gemini embeddings, so pacing requests avoids
+# sending all ingestion batches back-to-back. Increase this if your project has
+# a lower quota, or set it to 0 to disable throttling.
+embedding_request_delay_seconds:
+  gemini: 5
+
 # --- Optional post-processing on retrieved chunks (run in order) ---
 post_processing:
   - dedupe

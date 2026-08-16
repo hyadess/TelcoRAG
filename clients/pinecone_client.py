@@ -32,13 +32,14 @@ class PineconeDB:
         dimension: int = 1536,
         metric: str = "cosine",
         wait_timeout: float = 300.0,
-    ):
-        """Create the index if it doesn't exist, then connect to it."""
+    ) -> bool:
+        """Create/connect to the index; return True when it was newly created."""
         if dimension < 1:
             raise ValueError("dimension must be at least 1")
         if wait_timeout <= 0:
             raise ValueError("wait_timeout must be greater than 0")
-        if not self.pc.has_index(self.index_name):
+        created = not self.pc.has_index(self.index_name)
+        if created:
             logger.info(f"Creating index '{self.index_name}'...")
             self.pc.create_index(
                 name=self.index_name,
@@ -58,6 +59,7 @@ class PineconeDB:
         else:
             logger.info(f"Index '{self.index_name}' already exists.")
         self.index = self.pc.Index(self.index_name)
+        return created
 
     def _index_is_ready(self) -> bool:
         """Handle both mapping- and attribute-style Pinecone SDK responses."""

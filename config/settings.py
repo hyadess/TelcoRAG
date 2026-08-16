@@ -230,6 +230,20 @@ def get_embedding_dimensions() -> Optional[int]:
     return int(val)
 
 
+def get_embedding_request_delay(provider: str) -> float:
+    """Minimum pause, in seconds, between embedding API calls.
+
+    Providers enforce different quotas, so this is configured per provider in
+    ``pipeline.yaml``. A missing provider entry means no artificial delay.
+    """
+    delays = SETTINGS.pipeline.get("embedding_request_delay_seconds", {}) or {}
+    val = delays.get(provider, 0) if isinstance(delays, dict) else delays
+    delay = float(val or 0)
+    if delay < 0:
+        raise ValueError("embedding_request_delay_seconds cannot be negative")
+    return delay
+
+
 def get_embedding_index(provider: str) -> str:
     """Pinecone index name for a provider — not YAML-overridable on purpose."""
     if provider not in EMBEDDING_CONFIGS:
