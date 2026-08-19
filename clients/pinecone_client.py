@@ -6,16 +6,22 @@ import time
 from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
-from pinecone import Pinecone, ServerlessSpec
+from utils.adaptive_batch import AdaptiveBatchPolicy, run_adaptive_batches
 
 load_dotenv()
 
 logger = logging.getLogger("PineconeDB")
 
+UPSERT_BATCH_SIZE = 40
+DELETE_BATCH_SIZE = 1000
+
+
 class PineconeDB:
     """Thin wrapper over the Pinecone Python SDK."""
 
     def __init__(self, index_name: str = "default-index"):
+        from pinecone import Pinecone
+
         api_key = os.getenv("PINECONE_API_KEY")
         if not api_key:
             raise RuntimeError(
@@ -40,6 +46,8 @@ class PineconeDB:
             raise ValueError("wait_timeout must be greater than 0")
         created = not self.pc.has_index(self.index_name)
         if created:
+            from pinecone import ServerlessSpec
+
             logger.info(f"Creating index '{self.index_name}'...")
             self.pc.create_index(
                 name=self.index_name,
@@ -72,7 +80,12 @@ class PineconeDB:
             ready = status.get("ready", False)
         return bool(ready)
 
-    def upsert_vectors(self, vectors: List[Dict[str, Any]], batch_size: int = 100, namespace: str = ""):
+    def upsert_vectors(
+        self,
+        vectors: List[Dict[str, Any]],
+        batch_size: int = UPSERT_BATCH_SIZE,
+        namespace: str = "",
+    ):
         """Batch-upsert vectors. Format: [{'id', 'values', 'metadata'}, ...]
 
         `namespace` isolates vectors within an index — used to keep different
@@ -85,10 +98,49 @@ class PineconeDB:
 
         total = len(vectors)
         logger.info(f"Upserting {total} vectors (namespace={namespace or 'default'})...")
-        for i in range(0, total, batch_size):
-            batch = vectors[i : i + batch_size]
-            self.index.upsert(vectors=batch, namespace=namespace)
+        run_adaptive_batches(
+            vectors,
+            lambda batch: self.index.upsert(vectors=list(batch), namespace=namespace),
+            policy=AdaptiveBatchPolicy(
+                initial_batch_size=batch_size,
+                initial_backoff_seconds=2.0,
+            ),
+            operation="Pinecone upsert",
+            logger=logger,
+        )
         logger.info("Upsert complete.")
+
+    def delete_vectors(
+        self,
+        ids: List[str],
+        batch_size: int = DELETE_BATCH_SIZE,
+        namespace: str = "",
+    ) -> None:
+        """Delete vector IDs in batches; IDs not present in Pinecone are ignored."""
+        if self.index is None:
+            raise ValueError("Index not initialized. Call create_index() first.")
+        if batch_size < 1:
+            raise ValueError("batch_size must be at least 1")
+
+        total = len(ids)
+        if not total:
+            return
+        logger.info(
+            "Deleting up to %d existing vectors (namespace=%s)...",
+            total,
+            namespace or "default",
+        )
+        run_adaptive_batches(
+            ids,
+            lambda batch: self.index.delete(ids=list(batch), namespace=namespace),
+            policy=AdaptiveBatchPolicy(
+                initial_batch_size=batch_size,
+                initial_backoff_seconds=2.0,
+            ),
+            operation="Pinecone delete",
+            logger=logger,
+        )
+        logger.info("Vector cleanup complete.")
 
     def query_similarity(
         self,

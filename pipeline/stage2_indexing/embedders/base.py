@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
 from clients.pinecone_client import PineconeDB
+from pipeline.stage2_indexing.vector_metadata import pinecone_metadata
+from utils.adaptive_batch import AdaptiveBatchPolicy, run_adaptive_batches
 
 logger = logging.getLogger("Embedder")
 
@@ -60,19 +62,35 @@ class BaseEmbedder(ABC):
         ...
 
     # ------------------------------------------------------------------
-    # Generic batching wrapper. Most providers cap requests at some N
-    # texts and/or a token budget — we just chunk by N and concatenate.
+    # Generic adaptive batching wrapper. Most providers cap requests by text
+    # count, tokens, or throughput. Capacity failures reduce the batch size for
+    # the remainder of this run and retry the same inputs in order.
     # ------------------------------------------------------------------
     def _get_document_embeddings(self, texts: List[str]) -> List[List[float]]:
         if not texts:
             return []
-        out: List[List[float]] = []
-        for i in range(0, len(texts), self.batch_size):
-            chunk = texts[i : i + self.batch_size]
+        processed = 0
+
+        def embed_batch(chunk):
+            nonlocal processed
             logger.debug(
-                "Embedding batch %d-%d / %d", i, i + len(chunk), len(texts)
+                "Embedding batch %d-%d / %d",
+                processed,
+                processed + len(chunk),
+                len(texts),
             )
-            out.extend(self._embed_documents_batch(chunk))
+            result = self._embed_documents_batch(list(chunk))
+            processed += len(chunk)
+            return result
+
+        batch_results = run_adaptive_batches(
+            texts,
+            embed_batch,
+            policy=AdaptiveBatchPolicy(initial_batch_size=self.batch_size),
+            operation=f"{self.model} embedding",
+            logger=logger,
+        )
+        out = [vector for batch in batch_results for vector in batch]
         if len(out) != len(texts):
             raise RuntimeError(
                 f"Embedding count mismatch: got {len(out)} for {len(texts)} inputs"
@@ -88,16 +106,23 @@ class BaseEmbedder(ABC):
 
     def store_documents(self, chunks: List[Dict[str, Any]]):
         """Embed and store a list of chunks. Each chunk must have 'id', 'text', 'metadata'."""
+        # Validate and compact metadata before paying to generate embeddings.
+        metadatas = [pinecone_metadata(chunk) for chunk in chunks]
         texts = [c["text"] for c in chunks]
         logger.info(f"Generating embeddings for {len(texts)} documents...")
         embeddings = self._get_document_embeddings(texts)
 
         vectors = [
-            {"id": chunk["id"], "values": embeddings[i], "metadata": chunk.get("metadata", {})}
+            {"id": chunk["id"], "values": embeddings[i], "metadata": metadatas[i]}
             for i, chunk in enumerate(chunks)
         ]
         self.vector_db.upsert_vectors(vectors, namespace=self.namespace)
         logger.info("Documents stored successfully.")
+
+    def delete_documents(self, chunks: List[Dict[str, Any]]) -> None:
+        """Remove this document's chunk IDs before retrying an incomplete ingest."""
+        ids = [chunk["id"] for chunk in chunks]
+        self.vector_db.delete_vectors(ids, namespace=self.namespace)
 
     def embed_query(self, query: str) -> List[float]:
         """Public query-embedding entry point (used by hierarchical retrieval

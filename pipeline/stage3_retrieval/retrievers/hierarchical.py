@@ -48,6 +48,7 @@ from config.settings import SETTINGS
 from core.registry import EMBEDDERS, RETRIEVERS
 
 from .base import BaseRetriever
+from ..local_chunks import LocalChunkStore
 from .hierarchical_ops import (
     apply_levels,
     build_continuation,
@@ -78,7 +79,12 @@ _DEFAULT_LEVELS = [
 class HierarchicalRetriever(BaseRetriever):
     """Coarse-to-fine, structure-aware dense retriever with sibling + neighbour expansion."""
 
-    def __init__(self, embedder_name: Optional[str] = None, chunker: Optional[str] = None):
+    def __init__(
+        self,
+        embedder_name: Optional[str] = None,
+        chunker: Optional[str] = None,
+        local_store: Optional[LocalChunkStore] = None,
+    ):
         cfg = SETTINGS.pipeline.get("hierarchical", {})
         self.pool_factor = int(cfg.get("pool_factor", 3))
         self.count_bonus = float(cfg.get("count_bonus", 0.25))
@@ -98,6 +104,7 @@ class HierarchicalRetriever(BaseRetriever):
         self.neighbor_max_hops = int(cfg.get("neighbor_max_hops", 2))
 
         self._embedder = None
+        self.local_store = local_store or LocalChunkStore(chunker=chunker)
         if embedder_name:
             self._embedder = EMBEDDERS.build(embedder_name)
             self._embedder.initialize_db()
@@ -122,7 +129,7 @@ class HierarchicalRetriever(BaseRetriever):
             entry = dict(metadata or {})
             entry["id"] = match_id or entry.get("id", "")
             entry["score"] = float(score or 0.0)
-            out.append(entry)
+            out.append(self.local_store.enrich(entry))
         return out
 
     # ------------------------------------------------------------------
@@ -190,7 +197,9 @@ class HierarchicalRetriever(BaseRetriever):
                 if not rec:
                     break
                 scores.append(cosine(query_vec, rec.get("values", [])))
-                texts.append(rec.get("metadata", {}).get("subsection_text", ""))
+                metadata = dict(rec.get("metadata", {}) or {})
+                metadata["id"] = nid
+                texts.append(self.local_store.enrich(metadata).get("subsection_text", ""))
             return scores, texts
 
         prev_scores, prev_texts = score_side(prev_ids)

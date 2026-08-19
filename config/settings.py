@@ -82,13 +82,13 @@ RERANKER_CONFIGS: Dict[str, str] = {
 #   OpenAI:     up to 2048 inputs per request; 100 keeps tokens-per-request safe.
 #   Cohere:     hard cap of 96 texts per call for embed v3+.
 #   Voyage:    1000-text list cap; total tokens vary by model — 64 is safe.
-#   Gemini:     no explicit list cap, but per-request token budget is ~8k input.
+#   Gemini:     64 lowers per-call token pressure; adaptive fallback shrinks it.
 #   Perplexity: max 512 texts per call, 120k total tokens.
 EMBED_BATCH_SIZE: Dict[str, int] = {
     "openai": 100,
     "cohere": 96,
     "voyage": 64,
-    "gemini": 100,
+    "gemini": 64,
     "perplexity": 100,
 }
 

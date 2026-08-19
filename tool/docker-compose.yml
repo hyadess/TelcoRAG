@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: telcorag_feedback
+      POSTGRES_USER: telcorag
+      POSTGRES_PASSWORD: telcorag
+    ports:
+      - "5432:5432"
+    volumes:
+      - telcorag_feedback_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U telcorag -d telcorag_feedback"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  telcorag_feedback_data:

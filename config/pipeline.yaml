@@ -12,7 +12,7 @@ embedder:        gemini       # openai | gemini | cohere | voyage | perplexity
 chunker:         baseline      # baseline (single indexing convention)
 query_strategy:  decompose     # simple | decompose | diversify | abstract | hyde
 retriever:       vector  # vector | bm25 | hybrid | hierarchical
-reranker:        voyage        # voyage | cohere | rrf | llm | none
+reranker:        none        # voyage | cohere | rrf | llm | none
 
 # --- Model names per provider (override defaults from config/settings.py) ---
 models:

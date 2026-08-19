@@ -7,8 +7,8 @@ the two via RRF (see retrievers/hybrid.py) is a major retrieval upgrade for
 legal/regulated documents where precise terminology matters.
 
 Storage: a single pickle file containing the BM25 model and its associated
-metadata list. The metadata mirrors the chunks stored in Pinecone, so the
-retriever can use either index and return a consistent shape.
+local metadata list. Unlike compact Pinecone metadata, this intentionally keeps
+the text fields needed for sparse retrieval and downstream answer generation.
 
 Tokenization is intentionally simple — lowercased, split on word boundaries,
 stop-words removed via a small list. Good enough for English-language legal

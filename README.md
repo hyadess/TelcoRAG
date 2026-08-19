@@ -136,8 +136,12 @@ streamlit run app.py
 ```
 
 Ingestion writes extracted artifacts under `knowledge_base/documents/`, dense
-vectors to Pinecone, and the sparse BM25 index to `.cache/`. Successful dense
-uploads are recorded per index, namespace, and document in
+vectors with compact structural metadata to Pinecone, and the sparse BM25 index
+to `.cache/`. Chunk text (`subsection_text`, `full_subsection_text`, and
+`bm25_text`) stays in the local `structured_output_chunks__<chunker>.json`
+files; dense retrieval enriches Pinecone matches from those files by stable
+chunk ID before reranking or generation. Successful dense uploads are recorded
+per index, namespace, and document in
 `.cache/pinecone_ingestion_tracker.json`; unchanged documents are skipped on
 later ingestion runs. Retrieval reads
 queries from `data/good_queries.csv`, writes `data/responses.csv`, and saves a

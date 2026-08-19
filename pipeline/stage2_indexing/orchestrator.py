@@ -168,6 +168,32 @@ def run_ingestion(
             namespace or "default",
         )
     else:
+        # Keep sparse retrieval conservative while dense ingestion is retried:
+        # if Pinecone is not confirmed complete, this document must not remain
+        # searchable in BM25. It is added back only after the dense upload.
+        if update_bm25:
+            removed = _remove_bm25_chunk_ids(
+                {chunk.get("id", "") for chunk in chunks if chunk.get("id")},
+                bm25_index_path(chunker_name),
+            )
+            if removed:
+                logger.info(
+                    "BM25: removed %d chunks for incomplete document before retry",
+                    removed,
+                )
+
+        # A previous run can fail after Pinecone accepted only some upsert
+        # batches but before the tracker was marked complete. Cached chunks keep
+        # stable IDs, so remove every current ID first to make the retry clean
+        # and document-atomic. Pinecone ignores IDs that do not exist. A newly
+        # created index is already empty and needs no cleanup.
+        if not index_created:
+            logger.info(
+                "Tracker has no matching completed ingestion; cleaning up %d "
+                "possible partial vectors before retrying",
+                len(chunks),
+            )
+            embedder.delete_documents(chunks)
         logger.info(f"Embedding and storing {len(chunks)} chunks...")
         embedder.store_documents(chunks)
         # Never mark a document before store_documents completes: a failed
@@ -209,3 +235,27 @@ def _update_bm25_index(new_chunks: List[Dict], index_file: Path) -> None:
     fresh = BM25Index()
     fresh.build(merged)
     fresh.save(index_file)
+
+
+def _remove_bm25_chunk_ids(chunk_ids: set[str], index_file: Path) -> int:
+    """Remove a document's current chunk IDs from BM25 and return the count."""
+    if not chunk_ids:
+        return 0
+
+    bm25 = BM25Index()
+    if not bm25.load(index_file):
+        return 0
+
+    existing_chunks = [
+        {"id": metadata.get("id", ""), "metadata": metadata}
+        for metadata in bm25._metadatas
+    ]
+    remaining = [chunk for chunk in existing_chunks if chunk.get("id") not in chunk_ids]
+    removed = len(existing_chunks) - len(remaining)
+    if not removed:
+        return 0
+
+    fresh = BM25Index()
+    fresh.build(remaining)
+    fresh.save(index_file)
+    return removed

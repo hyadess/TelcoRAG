@@ -27,7 +27,7 @@ logger = logging.getLogger("HybridRetriever")
 def reciprocal_rank_fusion(
     rankings: List[List[Dict[str, Any]]],
     k: int = 60,
-    id_field: str = "subsection_text",
+    id_field: str = "id",
 ) -> List[Dict[str, Any]]:
     """
     Combine multiple ranked lists into one via RRF.
@@ -36,8 +36,8 @@ def reciprocal_rank_fusion(
         rankings: a list of ranked lists. Each inner list is one retriever's
             top-k output, where index 0 is rank 1.
         k: the RRF constant. Higher = flatter rank influence.
-        id_field: which metadata field uniquely identifies a document.
-            Defaults to subsection_text since that's the canonical content.
+        id_field: which field uniquely identifies a chunk. Defaults to the
+            stable chunk ID shared by Pinecone and the local BM25 index.
 
     Returns: a single list of dicts, ordered by RRF score descending. Each
     output dict carries the original metadata plus a new `score` field
