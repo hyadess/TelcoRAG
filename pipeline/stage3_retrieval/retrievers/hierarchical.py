@@ -129,8 +129,8 @@ class HierarchicalRetriever(BaseRetriever):
             entry = dict(metadata or {})
             entry["id"] = match_id or entry.get("id", "")
             entry["score"] = float(score or 0.0)
-            out.append(self.local_store.enrich(entry))
-        return out
+            out.append(entry)
+        return self.local_store.enrich_many(out)
 
     # ------------------------------------------------------------------
     # Sibling expansion (modular)

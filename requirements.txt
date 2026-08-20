@@ -3,6 +3,11 @@ python-dotenv
 jinja2
 pyyaml
 pydantic>=2
+fastapi>=0.115
+uvicorn[standard]>=0.30
+sqlalchemy>=2.0
+psycopg[binary]>=3.2
+requests>=2.32
 
 # LLM clients (only the one you use is strictly required at runtime;
 # they're listed here for the full feature set)

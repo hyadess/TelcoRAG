@@ -30,7 +30,9 @@ class ToolSettings:
         "DATABASE_URL",
         "postgresql+psycopg://telcorag:telcorag@localhost:5432/telcorag_feedback",
     )
-    backend_url: str = os.getenv("TELCORAG_BACKEND_URL", "http://localhost:8000")
+    backend_url: str = os.getenv(
+        "TELCORAG_BACKEND_URL", "http://localhost:8000"
+    ).rstrip("/")
     admin_password: str = os.getenv("TELCORAG_ADMIN_PASSWORD", "")
     retrieval_top_k: int = int(os.getenv("TELCORAG_RETRIEVAL_TOP_K", "30"))
     rerank_top_k: int = int(os.getenv("TELCORAG_RERANK_TOP_K", "20"))

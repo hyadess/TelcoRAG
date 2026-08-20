@@ -52,3 +52,15 @@ class Rating(Base):
     )
 
     response: Mapped[ChatResponse] = relationship(back_populates="ratings")
+
+
+class RagChunk(Base):
+    """Text kept outside Pinecone and loaded by vector ID during retrieval."""
+
+    __tablename__ = "rag_chunks"
+
+    chunker: Mapped[str] = mapped_column(String(64), primary_key=True)
+    chunk_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    subsection_text: Mapped[str] = mapped_column(Text, default="")
+    full_subsection_text: Mapped[str] = mapped_column(Text, default="")
+    bm25_text: Mapped[str] = mapped_column(Text, default="")

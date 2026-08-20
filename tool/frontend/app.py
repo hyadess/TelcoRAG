@@ -1,10 +1,23 @@
 """Streamlit chat and human-feedback interface."""
 
+import os
+import sys
 import uuid
+from pathlib import Path
 from typing import Any
+
+# Streamlit Community Cloud executes this file from the repository root but
+# places the entrypoint directory first on sys.path.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 import pandas as pd
 import streamlit as st
+
+for secret_name in ("TELCORAG_BACKEND_URL", "TELCORAG_ADMIN_PASSWORD"):
+    if secret_name in st.secrets and secret_name not in os.environ:
+        os.environ[secret_name] = str(st.secrets[secret_name])
 
 from tool.frontend.api_client import BackendError, ask, fetch_stats, submit_rating
 from tool.settings import RETRIEVER_NAME, SETTINGS

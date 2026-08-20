@@ -14,6 +14,8 @@ This file holds:
 Settings are loaded once at import time and exposed as a singleton `SETTINGS`.
 """
 
+import os
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -29,7 +31,11 @@ CONFIG_DIR = PROJECT_ROOT / "config"
 DATA_DIR = PROJECT_ROOT / "data"
 PROMPTS_DIR = PROJECT_ROOT / "prompts"
 PROMPT_EXAMPLES_DIR = PROJECT_ROOT / "prompt_examples"
-CACHE_DIR = PROJECT_ROOT / ".cache"
+CACHE_DIR = (
+    Path(tempfile.gettempdir()) / "telcorag-cache"
+    if os.getenv("VERCEL")
+    else PROJECT_ROOT / ".cache"
+)
 CACHE_DIR.mkdir(exist_ok=True)
 
 

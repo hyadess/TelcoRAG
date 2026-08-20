@@ -1,0 +1,27 @@
+[project]
+name = "telcorag"
+version = "0.1.0"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+  "cohere",
+  "fastapi>=0.115",
+  "google-auth",
+  "google-genai",
+  "jinja2",
+  "langchain-text-splitters",
+  "numpy",
+  "openai",
+  "perplexityai",
+  "pinecone",
+  "psycopg[binary]>=3.2",
+  "pydantic>=2",
+  "python-dotenv",
+  "pyyaml",
+  "rank-bm25",
+  "requests>=2.32",
+  "sqlalchemy>=2.0",
+  "voyageai",
+]
+
+[tool.vercel]
+entrypoint = "tool.backend.main:app"

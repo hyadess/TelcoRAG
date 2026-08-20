@@ -45,3 +45,25 @@ Open `http://localhost:8501`. FastAPI documentation is available at
 Tables are created on backend startup. For a larger deployment, replace
 `create_all` with Alembic migrations and run one backend worker per process;
 the pipeline is initialized lazily on the first chat request.
+
+## Deploy
+
+The production layout uses Supabase PostgreSQL, Vercel for FastAPI, and
+Streamlit Community Cloud for the UI.
+
+1. Create a Supabase project and copy its transaction-pooler connection string
+   (port 6543). Set it as `DATABASE_URL`, using the
+   `postgresql+psycopg://` prefix.
+2. From the repository root, seed the subsection text once:
+
+   ```bash
+   DATABASE_URL='postgresql+psycopg://...' python -m scripts.seed_supabase_chunks
+   ```
+
+3. Import the repository into Vercel. Set `DATABASE_URL`,
+   `TELCORAG_CHUNK_STORE=database`, provider credentials, and the remaining
+   `TELCORAG_*` values. Vercel loads `tool.backend.main:app` from
+   `pyproject.toml`.
+4. In Streamlit Community Cloud, deploy `tool/frontend/app.py`. Its only
+   required secret is `TELCORAG_BACKEND_URL` pointing to the Vercel deployment;
+   add `TELCORAG_ADMIN_PASSWORD` to enable the admin view.

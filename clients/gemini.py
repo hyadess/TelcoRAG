@@ -1,5 +1,6 @@
 """Vertex AI Gemini client — structured JSON and plain text responses."""
 
+import json
 import logging
 import os
 from pathlib import Path
@@ -32,13 +33,14 @@ def create_vertex_client(*, request_timeout_seconds: Optional[int] = None) -> ge
     project = os.getenv("GOOGLE_CLOUD_PROJECT", "").strip()
     location = os.getenv("GOOGLE_CLOUD_LOCATION", "").strip()
     credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "").strip()
+    credentials_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON", "").strip()
 
     missing = [
         name
         for name, value in (
             ("GOOGLE_CLOUD_PROJECT", project),
             ("GOOGLE_CLOUD_LOCATION", location),
-            ("GOOGLE_APPLICATION_CREDENTIALS", credentials_path),
+            ("Google credentials", credentials_path or credentials_json),
         )
         if not value
     ]
@@ -48,20 +50,34 @@ def create_vertex_client(*, request_timeout_seconds: Optional[int] = None) -> ge
             "Set them in .env before using Gemini."
         )
 
-    credential_file = Path(credentials_path).expanduser()
-    if not credential_file.is_file():
-        raise RuntimeError(
-            f"GOOGLE_APPLICATION_CREDENTIALS does not point to a file: {credential_file}"
+    if credentials_json:
+        try:
+            credentials_info = json.loads(credentials_json)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("GOOGLE_SERVICE_ACCOUNT_JSON is not valid JSON") from exc
+        from google.oauth2.service_account import Credentials
+
+        credentials = Credentials.from_service_account_info(
+            credentials_info,
+            scopes=[_CLOUD_PLATFORM_SCOPE],
+            quota_project_id=project,
         )
+    else:
+        credential_file = Path(credentials_path).expanduser()
+        if not credential_file.is_file():
+            raise RuntimeError(
+                "GOOGLE_APPLICATION_CREDENTIALS does not point to a file: "
+                f"{credential_file}"
+            )
 
-    # Local import keeps non-Gemini code importable when Google auth is absent.
-    from google.auth import load_credentials_from_file
+        # Local import keeps non-Gemini code importable when Google auth is absent.
+        from google.auth import load_credentials_from_file
 
-    credentials, _ = load_credentials_from_file(
-        str(credential_file),
-        scopes=[_CLOUD_PLATFORM_SCOPE],
-        quota_project_id=project,
-    )
+        credentials, _ = load_credentials_from_file(
+            str(credential_file),
+            scopes=[_CLOUD_PLATFORM_SCOPE],
+            quota_project_id=project,
+        )
     http_options = {"api_version": "v1"}
     if request_timeout_seconds is not None:
         # google-genai's HttpOptions timeout is expressed in milliseconds.

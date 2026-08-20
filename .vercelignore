@@ -1,0 +1,11 @@
+.cache
+.env
+.git
+.streamlit
+data
+evaluation
+knowledge_base
+resources
+tests_*.py
+tool/frontend
+utils/keyconfig.json

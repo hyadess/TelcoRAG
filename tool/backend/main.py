@@ -6,7 +6,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, Header, HTTPException, status
-from sqlalchemy import distinct, func, select
+from sqlalchemy import distinct, func, select, text
 from sqlalchemy.orm import Session
 
 from tool.settings import RETRIEVER_NAME, SETTINGS
@@ -43,6 +43,12 @@ def require_admin(x_admin_password: Annotated[str | None, Header()] = None) -> N
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "retriever": RETRIEVER_NAME}
+
+
+@app.get("/health/db")
+def database_health(db: DbSession) -> dict[str, str]:
+    db.execute(text("SELECT 1"))
+    return {"status": "ok", "database": "connected"}
 
 
 @app.post("/api/chat", response_model=ChatResult, status_code=status.HTTP_201_CREATED)
