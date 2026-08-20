@@ -15,9 +15,16 @@ if str(PROJECT_ROOT) not in sys.path:
 import pandas as pd
 import streamlit as st
 
+try:
+    streamlit_secrets = st.secrets.to_dict()
+except FileNotFoundError:
+    # Local development uses the root .env file; Streamlit Community Cloud
+    # supplies these values through secrets.toml.
+    streamlit_secrets = {}
+
 for secret_name in ("TELCORAG_BACKEND_URL", "TELCORAG_ADMIN_PASSWORD"):
-    if secret_name in st.secrets and secret_name not in os.environ:
-        os.environ[secret_name] = str(st.secrets[secret_name])
+    if secret_name in streamlit_secrets and secret_name not in os.environ:
+        os.environ[secret_name] = str(streamlit_secrets[secret_name])
 
 from tool.frontend.api_client import BackendError, ask, fetch_stats, submit_rating
 from tool.settings import RETRIEVER_NAME, SETTINGS
