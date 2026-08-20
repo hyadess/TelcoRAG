@@ -113,6 +113,8 @@ Fill only the provider keys your configuration uses:
 | `GOOGLE_CLOUD_PROJECT` | Vertex AI project for Gemini calls |
 | `GOOGLE_CLOUD_LOCATION` | Vertex AI region, such as `global` |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Absolute path to a Google credential JSON file with Vertex AI access |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | Complete service-account JSON for secret-based cloud deployments |
+| `GCP_PROJECT_NUMBER`, `GCP_SERVICE_ACCOUNT_EMAIL`, `GCP_WORKLOAD_IDENTITY_POOL_ID`, `GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID` | Keyless Vercel authentication through Google Workload Identity Federation |
 | `LLAMAPARSE_API_KEYPOOL` | PDF-to-Markdown ingestion; use a Python-style list such as `['key']` |
 | `OPENAI_API_KEY` | OpenAI embeddings |
 | `COHERE_API_KEY` | Cohere embeddings or reranking |

@@ -3,8 +3,10 @@
 import json
 import logging
 import os
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
-from typing import Optional
+from typing import Iterator, Optional
 
 from dotenv import load_dotenv
 from google import genai
@@ -20,8 +22,65 @@ logger = logging.getLogger("GeminiClient")
 
 # Client is constructed lazily so importing this module does not load credentials.
 _client: Optional[genai.Client] = None
+_request_oidc_token: ContextVar[str] = ContextVar("vercel_oidc_token", default="")
 
 _CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform"
+_OIDC_SUBJECT_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:jwt"
+
+
+@contextmanager
+def vercel_oidc_token(token: Optional[str]) -> Iterator[None]:
+    """Make a request's Vercel OIDC token available during Google auth refresh."""
+    value = (token or "").strip()
+    if not value:
+        yield
+        return
+    reset_token = _request_oidc_token.set(value)
+    try:
+        yield
+    finally:
+        _request_oidc_token.reset(reset_token)
+
+
+def _create_vercel_federated_credentials(
+    *,
+    project_number: str,
+    pool_id: str,
+    provider_id: str,
+    service_account_email: str,
+    project_id: str,
+):
+    from google.auth import exceptions, identity_pool
+
+    class VercelSubjectTokenSupplier(identity_pool.SubjectTokenSupplier):
+        def get_subject_token(self, context, request):
+            del context, request
+            token = _request_oidc_token.get() or os.getenv(
+                "VERCEL_OIDC_TOKEN", ""
+            ).strip()
+            if not token:
+                raise exceptions.RefreshError(
+                    "Vercel OIDC token is unavailable. The backend must receive "
+                    "the x-vercel-oidc-token request header."
+                )
+            return token
+
+    audience = (
+        f"//iam.googleapis.com/projects/{project_number}/locations/global/"
+        f"workloadIdentityPools/{pool_id}/providers/{provider_id}"
+    )
+    impersonation_url = (
+        "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/"
+        f"{service_account_email}:generateAccessToken"
+    )
+    return identity_pool.Credentials(
+        audience=audience,
+        subject_token_type=_OIDC_SUBJECT_TOKEN_TYPE,
+        subject_token_supplier=VercelSubjectTokenSupplier(),
+        service_account_impersonation_url=impersonation_url,
+        scopes=[_CLOUD_PLATFORM_SCOPE],
+        quota_project_id=project_id,
+    )
 
 
 def create_vertex_client(*, request_timeout_seconds: Optional[int] = None) -> genai.Client:
@@ -34,13 +93,37 @@ def create_vertex_client(*, request_timeout_seconds: Optional[int] = None) -> ge
     location = os.getenv("GOOGLE_CLOUD_LOCATION", "").strip()
     credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "").strip()
     credentials_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON", "").strip()
+    federation = {
+        "GCP_PROJECT_NUMBER": os.getenv("GCP_PROJECT_NUMBER", "").strip(),
+        "GCP_WORKLOAD_IDENTITY_POOL_ID": os.getenv(
+            "GCP_WORKLOAD_IDENTITY_POOL_ID", ""
+        ).strip(),
+        "GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID": os.getenv(
+            "GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID", ""
+        ).strip(),
+        "GCP_SERVICE_ACCOUNT_EMAIL": os.getenv(
+            "GCP_SERVICE_ACCOUNT_EMAIL", ""
+        ).strip(),
+    }
+    federation_configured = all(federation.values())
+    partial_federation = any(federation.values()) and not federation_configured
+
+    if partial_federation and not (credentials_path or credentials_json):
+        missing_federation = [name for name, value in federation.items() if not value]
+        raise RuntimeError(
+            "Incomplete Vercel Workload Identity configuration; missing: "
+            + ", ".join(missing_federation)
+        )
 
     missing = [
         name
         for name, value in (
             ("GOOGLE_CLOUD_PROJECT", project),
             ("GOOGLE_CLOUD_LOCATION", location),
-            ("Google credentials", credentials_path or credentials_json),
+            (
+                "Google credentials",
+                credentials_path or credentials_json or federation_configured,
+            ),
         )
         if not value
     ]
@@ -61,6 +144,14 @@ def create_vertex_client(*, request_timeout_seconds: Optional[int] = None) -> ge
             credentials_info,
             scopes=[_CLOUD_PLATFORM_SCOPE],
             quota_project_id=project,
+        )
+    elif federation_configured:
+        credentials = _create_vercel_federated_credentials(
+            project_number=federation["GCP_PROJECT_NUMBER"],
+            pool_id=federation["GCP_WORKLOAD_IDENTITY_POOL_ID"],
+            provider_id=federation["GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID"],
+            service_account_email=federation["GCP_SERVICE_ACCOUNT_EMAIL"],
+            project_id=project,
         )
     else:
         credential_file = Path(credentials_path).expanduser()

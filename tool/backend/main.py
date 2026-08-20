@@ -58,10 +58,16 @@ def database_health(db: DbSession) -> dict[str, str]:
 
 
 @app.post("/api/chat", response_model=ChatResult, status_code=status.HTTP_201_CREATED)
-def chat(payload: ChatRequest, db: DbSession) -> ChatResult:
+def chat(
+    payload: ChatRequest,
+    db: DbSession,
+    x_vercel_oidc_token: Annotated[str | None, Header()] = None,
+) -> ChatResult:
     started = time.perf_counter()
     try:
-        answer, subsections = answer_question(payload.question)
+        answer, subsections = answer_question(
+            payload.question, vercel_token=x_vercel_oidc_token
+        )
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

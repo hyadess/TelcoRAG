@@ -65,19 +65,23 @@ def serialize_subsections(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     ]
 
 
-def answer_question(question: str) -> tuple[str, list[dict[str, Any]]]:
+def answer_question(
+    question: str, *, vercel_token: str | None = None
+) -> tuple[str, list[dict[str, Any]]]:
+    from clients.gemini import vercel_oidc_token
     from pipeline.stage3_retrieval.generator import generate_response
 
     # Several provider SDK clients are not guaranteed to be thread-safe. The
     # lock keeps a multi-threaded ASGI worker from interleaving pipeline calls.
-    with _query_lock:
-        trace = get_pipeline().process_query(
-            question,
-            retrieval_top_k=SETTINGS.retrieval_top_k,
-            rerank_top_k=SETTINGS.rerank_top_k,
-        )
-        chunks = trace.final_chunks
-        answer = generate_response(question, chunks)
+    with vercel_oidc_token(vercel_token):
+        with _query_lock:
+            trace = get_pipeline().process_query(
+                question,
+                retrieval_top_k=SETTINGS.retrieval_top_k,
+                rerank_top_k=SETTINGS.rerank_top_k,
+            )
+            chunks = trace.final_chunks
+            answer = generate_response(question, chunks)
     if not answer:
         answer = "The answer service returned no text. Please try again."
     return answer, serialize_subsections(chunks)
