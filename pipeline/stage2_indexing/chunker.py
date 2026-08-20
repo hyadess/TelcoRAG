@@ -9,7 +9,7 @@ Chunking lives in the ``chunkers/`` plugin folder. This module re-exports the
 Prefer building from the registry instead:
 
     from core.registry import CHUNKERS, discover_plugins
-    discover_plugins()
+    discover_plugins(include_judges=False)
     chunker = CHUNKERS.build("baseline", max_chunk_size=2048, overlap=204)
 """
 

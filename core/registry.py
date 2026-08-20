@@ -72,12 +72,14 @@ JUDGE_MODULES = Registry("judge_module")
 # DISCOVERY — call this once at startup to trigger all @register decorators
 # =============================================================================
 
-def discover_plugins() -> None:
+def discover_plugins(*, include_judges: bool = True) -> None:
     """
     Import every plugin folder so the @register decorators run.
 
     This is idempotent — Python caches imported modules, so calling it more than
     once is cheap. Call it from any entry script before reading pipeline.yaml.
+    Runtime-only deployments can set ``include_judges=False`` when the offline
+    evaluation package is not shipped.
     """
     # Each of these imports has the side effect of populating its registry.
     # Order doesn't matter; the registries are independent.
@@ -86,4 +88,8 @@ def discover_plugins() -> None:
     import pipeline.stage3_retrieval.query_strategies  # noqa: F401
     import pipeline.stage3_retrieval.retrievers      # noqa: F401
     import pipeline.stage3_retrieval.rerankers       # noqa: F401
-    import evaluation.judge.modules                  # noqa: F401
+    # Judge modules are only needed by the offline evaluation workflow.  The
+    # deployed chat backend intentionally omits ``evaluation/`` to keep its
+    # serverless bundle small, so runtime callers must be able to skip them.
+    if include_judges:
+        import evaluation.judge.modules              # noqa: F401

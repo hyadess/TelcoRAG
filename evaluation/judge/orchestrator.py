@@ -84,7 +84,7 @@ def evaluate_batch(
     the same length as `queries`. None means "not provided" for that field;
     individual modules will skip themselves if their needed inputs are missing.
     """
-    discover_plugins()
+    discover_plugins(include_judges=True)
     if module_names is None:
         module_names = FULL_MODULES
     modules = [JUDGE_MODULES.build(name) for name in module_names]

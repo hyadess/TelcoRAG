@@ -54,7 +54,7 @@ class RetrievalPipeline:
         chunker_name: Optional[str] = None,
         two_call: Optional[bool] = None,
     ):
-        discover_plugins()
+        discover_plugins(include_judges=False)
         cfg = SETTINGS.pipeline
 
         self.embedder_name = embedder_name or cfg["embedder"]

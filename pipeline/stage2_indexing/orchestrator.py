@@ -109,7 +109,7 @@ def run_ingestion(
 
     Returns: the chunk list.
     """
-    discover_plugins()
+    discover_plugins(include_judges=False)
     pipeline_cfg = SETTINGS.pipeline
     chunk_cfg = pipeline_cfg.get("chunking", {})
     embedder_name = embedder_name or pipeline_cfg["embedder"]
