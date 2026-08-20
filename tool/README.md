@@ -11,9 +11,10 @@ The tool's retriever is selected in `tool/settings.py` with `RETRIEVER_NAME`.
 It can also be overridden at runtime with `TELCORAG_RETRIEVER`. Valid values are
 `vector`, `bm25`, `hybrid`, and `hierarchical`.
 
-Copy `tool/.env.example` values into the project's existing `.env` and set the
-usual TelcoRAG provider credentials. Set `TELCORAG_ADMIN_PASSWORD` in production;
-when it is empty, the analytics endpoint is intentionally open for local use.
+Copy the root `.env.example` to the root `.env` and set the required values
+there. All pipeline, backend, synchronization, and local frontend commands read
+that same file. Set `TELCORAG_ADMIN_PASSWORD` in production; when it is empty,
+the analytics endpoint is intentionally open for local use.
 
 ## Run locally
 
