@@ -3,7 +3,17 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, JSON, String, Text, UniqueConstraint
+from sqlalchemy import (
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    JSON,
+    LargeBinary,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -54,13 +64,33 @@ class Rating(Base):
     response: Mapped[ChatResponse] = relationship(back_populates="ratings")
 
 
-class RagChunk(Base):
-    """Text kept outside Pinecone and loaded by vector ID during retrieval."""
+class ChunkUploadTracker(Base):
+    """Fingerprint of each chunk JSON synchronized to a per-chunker table."""
 
-    __tablename__ = "rag_chunks"
+    __tablename__ = "chunk_upload_tracker"
 
     chunker: Mapped[str] = mapped_column(String(64), primary_key=True)
-    chunk_id: Mapped[str] = mapped_column(String(128), primary_key=True)
-    subsection_text: Mapped[str] = mapped_column(Text, default="")
-    full_subsection_text: Mapped[str] = mapped_column(Text, default="")
-    bm25_text: Mapped[str] = mapped_column(Text, default="")
+    source_file: Mapped[str] = mapped_column(Text, primary_key=True)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    file_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    row_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now
+    )
+
+
+class ChunkArtifact(Base):
+    """Compressed chunker-specific runtime artifacts such as BM25 indexes."""
+
+    __tablename__ = "chunk_artifacts"
+
+    chunker: Mapped[str] = mapped_column(String(64), primary_key=True)
+    artifact_name: Mapped[str] = mapped_column(String(64), primary_key=True)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    compression: Mapped[str] = mapped_column(String(16), nullable=False)
+    source_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    stored_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now
+    )

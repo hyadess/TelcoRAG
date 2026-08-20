@@ -34,6 +34,7 @@ class ToolSettings:
         "TELCORAG_BACKEND_URL", "http://localhost:8000"
     ).rstrip("/")
     admin_password: str = os.getenv("TELCORAG_ADMIN_PASSWORD", "")
+    chunk_store: str = os.getenv("TELCORAG_CHUNK_STORE", "local").strip().lower()
     retrieval_top_k: int = int(os.getenv("TELCORAG_RETRIEVAL_TOP_K", "30"))
     rerank_top_k: int = int(os.getenv("TELCORAG_RERANK_TOP_K", "20"))
     request_timeout_seconds: int = int(os.getenv("TELCORAG_REQUEST_TIMEOUT", "180"))

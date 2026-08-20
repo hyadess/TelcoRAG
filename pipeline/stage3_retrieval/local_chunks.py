@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 from config.settings import KNOWLEDGE_BASE_DIR, get_chunker_name
+from tool.backend.chunk_tables import chunk_table_name, chunker_slug
+from utils.database_url import psycopg_database_url
 
 
 logger = logging.getLogger("LocalChunkStore")
@@ -22,10 +24,15 @@ class LocalChunkStore:
         self,
         chunker: Optional[str] = None,
         root: Optional[Union[str, Path]] = None,
+        backend: Optional[str] = None,
     ):
         self.chunker = (chunker or get_chunker_name()).strip().lower().replace("/", "_")
+        self.chunker_slug = chunker_slug(self.chunker)
         self.root = Path(root) if root is not None else KNOWLEDGE_BASE_DIR
-        self.backend = os.getenv("TELCORAG_CHUNK_STORE", "local").strip().lower()
+        configured_backend = backend or (
+            "local" if root is not None else os.getenv("TELCORAG_CHUNK_STORE", "local")
+        )
+        self.backend = configured_backend.strip().lower()
         self._texts_by_id: Optional[Dict[str, Dict[str, str]]] = None
         self._lock = threading.Lock()
 
@@ -86,23 +93,19 @@ class LocalChunkStore:
         database_url = os.getenv("DATABASE_URL", "").strip()
         if not database_url:
             raise RuntimeError("DATABASE_URL is required for TELCORAG_CHUNK_STORE=database")
-        if database_url.startswith("postgresql+psycopg://"):
-            database_url = "postgresql://" + database_url.removeprefix(
-                "postgresql+psycopg://"
-            )
-        elif database_url.startswith("postgres://"):
-            database_url = "postgresql://" + database_url.removeprefix("postgres://")
-
         import psycopg
 
-        sql = """
+        table_name = chunk_table_name(self.chunker_slug)
+        sql = f"""
             SELECT chunk_id, subsection_text, full_subsection_text, bm25_text
-            FROM rag_chunks
-            WHERE chunker = %s AND chunk_id = ANY(%s)
+            FROM {table_name}
+            WHERE chunk_id = ANY(%s)
         """
-        with psycopg.connect(database_url, prepare_threshold=None) as connection:
+        with psycopg.connect(
+            psycopg_database_url(database_url), prepare_threshold=None
+        ) as connection:
             with connection.cursor() as cursor:
-                cursor.execute(sql, (self.chunker, chunk_ids))
+                cursor.execute(sql, (chunk_ids,))
                 rows = cursor.fetchall()
         return {
             row[0]: {
@@ -115,6 +118,8 @@ class LocalChunkStore:
 
     def enrich_many(self, chunks: list[Dict[str, Any]]) -> list[Dict[str, Any]]:
         """Merge text for many matches with one local load or database query."""
+        if not chunks:
+            return []
         chunk_ids = [str(chunk.get("id", "")) for chunk in chunks if chunk.get("id")]
         if self.backend == "database":
             texts_by_id = self._load_database(chunk_ids)

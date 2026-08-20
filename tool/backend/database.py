@@ -7,19 +7,11 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy.pool import NullPool
 
 from tool.settings import SETTINGS
+from utils.database_url import sqlalchemy_database_url
 
 
 class Base(DeclarativeBase):
     pass
-
-
-def sqlalchemy_database_url(url: str) -> str:
-    """Normalize provider URLs to SQLAlchemy's psycopg v3 dialect."""
-    if url.startswith("postgres://"):
-        return "postgresql+psycopg://" + url.removeprefix("postgres://")
-    if url.startswith("postgresql://"):
-        return "postgresql+psycopg://" + url.removeprefix("postgresql://")
-    return url
 
 
 engine_options = {"pool_pre_ping": True}

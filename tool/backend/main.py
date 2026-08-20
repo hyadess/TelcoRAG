@@ -6,10 +6,12 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, Header, HTTPException, status
-from sqlalchemy import distinct, func, select, text
+from sqlalchemy import MetaData, distinct, func, select, text
 from sqlalchemy.orm import Session
 
-from tool.settings import RETRIEVER_NAME, SETTINGS
+from config.settings import get_chunker_name
+from tool.backend.chunk_tables import chunk_table
+from tool.settings import CHUNKER_NAME, RETRIEVER_NAME, SETTINGS
 
 from .database import Base, engine, get_db
 from .models import ChatResponse, Rating
@@ -27,6 +29,10 @@ from .schemas import (
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     Base.metadata.create_all(bind=engine)
+    if SETTINGS.chunk_store == "database":
+        metadata = MetaData()
+        table = chunk_table(metadata, CHUNKER_NAME or get_chunker_name())
+        metadata.create_all(bind=engine, tables=[table])
     yield
 
 

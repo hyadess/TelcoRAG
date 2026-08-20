@@ -6,12 +6,15 @@ returns top_k chunks for a query. Loading is lazy and cached on the instance.
 """
 
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from config.settings import BM25_INDEX_FILE, bm25_index_path
 from core.registry import RETRIEVERS
 from pipeline.stage2_indexing.bm25_index import BM25Index
+from pipeline.stage3_retrieval.remote_artifacts import restore_bm25_index
+from tool.backend.chunk_tables import chunker_slug
 
 from .base import BaseRetriever
 
@@ -25,6 +28,7 @@ class BM25Retriever(BaseRetriever):
         index_path: Optional[Union[str, Path]] = None,
         chunker: Optional[str] = None,
     ):
+        self.chunker = chunker_slug(chunker) if chunker else None
         # Explicit index_path wins; otherwise resolve from the chunker variant
         # (each chunker has its own BM25 corpus). Falls back to the legacy
         # global index file when neither is given.
@@ -38,12 +42,20 @@ class BM25Retriever(BaseRetriever):
 
     def _ensure_loaded(self):
         if self._index is None:
+            if (
+                not self.index_path.exists()
+                and self.chunker
+                and os.getenv("TELCORAG_CHUNK_STORE", "local").strip().lower()
+                == "database"
+            ):
+                restore_bm25_index(self.chunker, self.index_path)
             idx = BM25Index()
             ok = idx.load(self.index_path)
             if not ok:
                 raise FileNotFoundError(
                     f"BM25 index not found at {self.index_path}. "
-                    f"Run ingestion to build it."
+                    "Run ingestion to build it, then run "
+                    "scripts.sync_supabase_chunks for this chunker."
                 )
             self._index = idx
 

@@ -81,7 +81,7 @@ class HybridRetriever(BaseRetriever):
         cfg = SETTINGS.pipeline.get("hybrid", {})
         self.rrf_k = rrf_k if rrf_k is not None else cfg.get("rrf_k", 60)
 
-        self.vector = VectorRetriever(embedder_name=embedder_name)
+        self.vector = VectorRetriever(embedder_name=embedder_name, chunker=chunker)
         # BM25 sub-retriever reads the chunker-specific index so the sparse
         # half reads the matching BM25 corpus for this chunker.
         self.bm25 = BM25Retriever(chunker=chunker)
