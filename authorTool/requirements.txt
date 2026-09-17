@@ -1,0 +1,13 @@
+# authorTool — offline author workbench.
+#
+# Install on top of the repository's own requirements.txt:
+#     pip install -r requirements.txt -r authorTool/requirements.txt
+#
+# streamlit>=1.49 is what st.pdf and st.dialog need; the root requirements.txt
+# pins streamlit unpinned and tool/requirements.txt allows >=1.40, so a clean
+# install elsewhere could land below that and the evidence overlay would fail
+# exactly when it is needed.
+streamlit>=1.49
+# st.pdf renders through this frontend component. Without it the overlay falls
+# back to the markdown page plus a per-page PDF download.
+streamlit-pdf>=1.0.8
